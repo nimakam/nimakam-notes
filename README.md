@@ -1,6 +1,6 @@
 # Coming soon
 
-Here I will publish thoughts and ideas.
+Thoughts and ideas published here ...
 
 
 
