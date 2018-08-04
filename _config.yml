@@ -1,5 +1,6 @@
 title: nimak
 description: Nima's personal blog
+logo: profile.png
 show_downloads: false
 google_analytics:
 theme: jekyll-theme-minimal
