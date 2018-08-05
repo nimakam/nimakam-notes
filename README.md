@@ -17,3 +17,6 @@ Thoughts and ideas published here ...
 
 [Twitter](https://twitter.com/nimakam)
 
+# Notes
+
+[Organizing a project on GitHub](notes/misc/organizing-project-on-github.md)
