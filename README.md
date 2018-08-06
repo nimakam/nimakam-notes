@@ -1,4 +1,4 @@
-# Nima's public notes
+# Nima's notes
 
 Coming soon ...
 <!--[Organizing a project on GitHub](notes/misc/organizing-project-on-github.md)-->
