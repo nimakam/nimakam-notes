@@ -1,7 +1,6 @@
 # Nima's notes
 
-Coming soon ...
-<!--[Organizing a project on GitHub](notes/misc/organizing-project-on-github.md)-->
+[Trust-minimal stable-coin research proposal](stable-coin/readme.md)
 
 ## Links
 
