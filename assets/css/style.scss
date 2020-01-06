@@ -1,0 +1,21 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+.wrapper {
+    width: unset;
+}
+
+.header {
+    width: 150px;
+}
+
+.footer {
+    width: 150px;
+}
+
+.section {
+    width: unset;
+    padding-left: 200px;
+}

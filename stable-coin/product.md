@@ -3,7 +3,7 @@
 - {{PegDollar}} for consumers
 - {{PegLoan}} for other stakeholders such as financial investors
 
-> Note: Names inside {{}} denote placeholder product names.
+> Note: Names inside `{{}}` symbols denote placeholder product names.
 
 Based on the [vision](./vision.md) of this proposal, we focus on envisioning a viable product that will function on top of the proposed [system](./system.md). Here we describe the different aspects of the potential product's development, business model, market position/branding, assumptions made along the way, as well as the value interactions between stakeholders.
 
