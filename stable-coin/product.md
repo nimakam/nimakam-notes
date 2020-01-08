@@ -1,9 +1,9 @@
-# The products
+# The product
 
-- {{PegDollar}} for consumers
-- {{PegLoan}} for other stakeholders such as financial investors
+- **\{\{PegDollar\}\}** for consumers is the main product we focus on
+- **\{\{PegLoan\}\}** for other stakeholders such as financial investors, is the periphery product that we will touch on.
 
-> Note: Names inside `{{}}` symbols denote placeholder product names.
+> Note: Names inside \{\{\}\} denote placeholder product names.
 
 Based on the [vision](./vision.md) of this proposal, we focus on envisioning a viable product that will function on top of the proposed [system](./system.md). Here we describe the different aspects of the potential product's development, business model, market position/branding, assumptions made along the way, as well as the value interactions between stakeholders.
 
@@ -16,9 +16,9 @@ References:
 
 ## Basic description
 
-{{PegLoan}} is a loan system available to all on a public blockchain, which produces {{PegDollar}}, a money product in the form of a cryptocurrency token representing the US dollar ($). Anyone can buy, hold and use this currency, as well as store it in a digital savings account and collect interest, all without the involvement of a bank.
+\{\{PegLoan\}\} is a loan system available to all on a public blockchain, which produces \{\{PegDollar\}\}, a money product in the form of a cryptocurrency token representing the US dollar ($). Anyone can buy, hold and use this currency, as well as store it in a digital savings account and collect interest, all without the involvement of a bank.
 
-There are many other available cryptocurrencies representing the US Dollar, however they all depend on some type of central entity, making them more vulnerable to capture or failure. {{PegLoan}} is ownerless and functions on a never-changing (immutable) secure smart contract. The system allows anyone to take a loan of {{PegDollars}} against their trust-minimal blockchain assets (e.g. ETH on Ethereum, BTC on Bitcoin) without really giving up ownership, after storing a proportional amount of the backing asset in a blockchain account. While the system guarantees most aspects of security, transparent to the users, various actors are incentivized to profit from competing to maintain the system.
+There are many other available cryptocurrencies representing the US Dollar, however they all depend on some type of central entity, making them more vulnerable to capture or failure. \{\{PegLoan\}\} is ownerless and functions on a never-changing (immutable) secure smart contract. The system allows anyone to take a loan of \{\{PegDollars\}\} against their trust-minimal blockchain assets (e.g. ETH on Ethereum, BTC on Bitcoin) without really giving up ownership, after storing a proportional amount of the backing asset in a blockchain account. While the system guarantees most aspects of security, transparent to the users, various actors are incentivized to profit from competing to maintain the system.
 
 ## Assumptions
 
@@ -36,7 +36,7 @@ There are many other available cryptocurrencies representing the US Dollar, howe
 
 ## Advance description
 
-In more technical terms, {{PegLoan}} is a trust-minimized, governance-minimized, capital efficient, collateral-backed stable-coin system on Ethereum that only works with ETH as collateral and has no formal governance process or token. It focuses on one stable currency pegged to the US dollar, given the minimal level of cognitive load required for everyday use of a US dollar digital currency. However, it is possible for anyone to copy the ideas and open source code behind {{PegLoan}} to deploy new instances of the system targeting different currencies or other baskets of assets. There exist many stable-coin competitors as of this writing, ranging from centrally issued ones, to automated ones like DAI by MakerDAO. We believe all of these competitors represent an inferior level of optimizations around trust minimization, risk minimization,  capital efficiency, and governance minimization, that significantly lowers their potential for long-term success. These other options, either depend on a centralized entity for issuance, or for governance, and often do not efficiently flow capital through the system.
+In more technical terms, \{\{PegLoan\}\} is a trust-minimized, governance-minimized, capital efficient, collateral-backed stable-coin system on Ethereum that only works with ETH as collateral and has no formal governance process or token. It focuses on one stable currency pegged to the US dollar, given the minimal level of cognitive load required for everyday use of a US dollar digital currency. However, it is possible for anyone to copy the ideas and open source code behind \{\{PegLoan\}\} to deploy new instances of the system targeting different currencies or other baskets of assets. There exist many stable-coin competitors as of this writing, ranging from centrally issued ones, to automated ones like DAI by MakerDAO. We believe all of these competitors represent an inferior level of optimizations around trust minimization, risk minimization,  capital efficiency, and governance minimization, that significantly lowers their potential for long-term success. These other options, either depend on a centralized entity for issuance, or for governance, and often do not efficiently flow capital through the system.
 
 ### Stakeholders
 
@@ -48,17 +48,17 @@ In more technical terms, {{PegLoan}} is a trust-minimized, governance-minimized,
 
 ### Partners
 
-- **Wallets** - Popular end user apps that allow self-custody, buying, selling, receiving, and sending of digital assets. They would be encouraged to support and showcase {{PegDollar}} as one of their main options.
-- **Exchanges** - Popular exchanges, be they centralized, or decentralized, would be encouraged to add ability to trade pairs with {{PegDollar}} as well as encourage liquidity brought in by exchange traders or liquidity providers.
-- **Money protocols** - These are smart contract for lending, burrowing, decentralized exchange , synthetics, prediction markets amongst others that would be encouraged to support {{PegDollar}} as an option on their services.
+- **Wallets** - Popular end user apps that allow self-custody, buying, selling, receiving, and sending of digital assets. They would be encouraged to support and showcase \{\{PegDollar\}\} as one of their main options.
+- **Exchanges** - Popular exchanges, be they centralized, or decentralized, would be encouraged to add ability to trade pairs with \{\{PegDollar\}\} as well as encourage liquidity brought in by exchange traders or liquidity providers.
+- **Money protocols** - These are smart contract for lending, burrowing, decentralized exchange , synthetics, prediction markets amongst others that would be encouraged to support \{\{PegDollar\}\} as an option on their services.
 
 ## Ode to Uniswap
 
-Even though {{PegLoan}} provides a different financial service compared to Hayden Adams' Uniswap, some of its properties around trust-minimization and decentralization are in fact inspired by Uniswap. It also attempts to stay true to the brand essence of Uniswap, which also happens to overlaps with the values of the greater Ethereum community, and its [Unicorn symbology](https://github.com/loredanacirstea/articles/blob/master/articles/The_Ethereum_Unicorn.md).
+Even though \{\{PegLoan\}\} provides a different financial service compared to Hayden Adams' Uniswap, some of its properties around trust-minimization and decentralization are in fact inspired by Uniswap. It also attempts to stay true to the brand essence of Uniswap, which also happens to overlaps with the values of the greater Ethereum community, and its [Unicorn symbology](https://github.com/loredanacirstea/articles/blob/master/articles/The_Ethereum_Unicorn.md).
 
 Uniswap is a maximally decentralized exchange smart contract, that is permission-less, censorship resistant and unstoppable. After the contract's finalization and deployment by original author, no one (not even the author) has any control over its operation. The contract will run as long as Ethereum 1.0 continues, and has been available to anyone with an internet connection, to be used in performing token exchanges or profiting by providing liquidity.
 
-If done right, {{PegLoan}} and its default US dollar stable-coin {{PegDollar}}, will have most or all of the important properties of Uniswap, including its level of decentralization. After deployment and finalization, the {{PegLoan}} smart contract, should no longer be controlled by anyone, and be available to all Ethereum users.
+If done right, \{\{PegLoan\}\} and its default US dollar stable-coin \{\{PegDollar\}\}, will have most or all of the important properties of Uniswap, including its level of decentralization. After deployment and finalization, the \{\{PegLoan\}\} smart contract, should no longer be controlled by anyone, and be available to all Ethereum users.
 
 ## Tip of the hat to MakerDAO
 
@@ -72,9 +72,9 @@ A few options detailed below:
 
 The more generic branding can be used for any public blockchain, and is consistent with the terminology used.
 
-- {{PegLoan}} = PegLoan
-- {{PegDollar}} = PegDollar
-- {{PegDollar}} symbol: 𝕡$
+- \{\{PegLoan\}\} = PegLoan
+- \{\{PegDollar\}\} = PegDollar
+- \{\{PegDollar\}\} symbol: 𝕡$
 
 In case of use on the Ethereum blockchain, this generic branding is a fallback to the more compelling option below. Of course the Ethereum community can effectively reject the branding below, based on the sentiment that the product does not sufficiently align itself with Ethereum, or it is attempting to illegitimately appropriate the community's identity.
 
@@ -82,8 +82,8 @@ In case of use on the Ethereum blockchain, this generic branding is a fallback t
 
 Preferred option for Ethereum.
 
-- {{PegLoan}} = Uniloan
-- {{PegDollar}} = UniDollar
+- \{\{PegLoan\}\} = Uniloan
+- \{\{PegDollar\}\} = UniDollar
 - Brand = 🦄
 
 The brand symbology and emoji representation is inherently "meme-able", adding to the velocity of the product's dissemination.
@@ -108,11 +108,11 @@ For mass users of UniDollar, more likely part of the early and late majority, wh
 
 ## Market
 
-{{PegDollar}} and {{PegLoan}} represent the two sides of our system's two sided market, one focused on consumers and the other on financial investors. Per our [vision](vision.md), primary focus will be more on the consumer market.
+\{\{PegDollar\}\} and \{\{PegLoan\}\} represent the two sides of our system's two sided market, one focused on consumers and the other on financial investors. Per our [vision](vision.md), primary focus will be more on the consumer market.
 
-The main market we are considering is the "general-purpose consumer money" market, or larger segment. We will consider the various properties that determine demand for a given money product in this market, whether they are determined by the consumer's desires, technical aspects of that money product, or the environmental factors such as jurisdictional regulation. We will also categorize the market and define sub-segments, in order to better show the optimal positioning of {{PegDollar}}.
+The main market we are considering is the "general-purpose consumer money" market, or larger segment. We will consider the various properties that determine demand for a given money product in this market, whether they are determined by the consumer's desires, technical aspects of that money product, or the environmental factors such as jurisdictional regulation. We will also categorize the market and define sub-segments, in order to better show the optimal positioning of \{\{PegDollar\}\}.
 
-We will also briefly touch on the "Digital asset backed loan" market, and discuss optimal positioning of {{PegLoan}} for the system's other stakeholders such as loan takers, price feed providers, liquidators, and market arbitragers.
+We will also briefly touch on the "Digital asset backed loan" market, and discuss optimal positioning of \{\{PegLoan\}\} for the system's other stakeholders such as loan takers, price feed providers, liquidators, and market arbitragers.
 
 ### Desired properties
 
@@ -132,7 +132,7 @@ Money products track a commonly accepted concept of value per unit of account th
 
 #### Interest bearing
 
-A money product that can earn risk free interest, while not in use, is superior to one that does not. Bank deposit money does earn small amounts of interest when stored in savings accounts that subjects the money to some restrictions around withdrawal. DAI and {{PegDollar}} offer considerably higher variable interest, which makes them a better in terms of SoV as not only are they likely not to lose value, the value is likely to increase with time.
+A money product that can earn risk free interest, while not in use, is superior to one that does not. Bank deposit money does earn small amounts of interest when stored in savings accounts that subjects the money to some restrictions around withdrawal. DAI and \{\{PegDollar\}\} offer considerably higher variable interest, which makes them a better in terms of SoV as not only are they likely not to lose value, the value is likely to increase with time.
 
 #### Asset backing
 
@@ -140,7 +140,7 @@ In order to ensure their long term value, money products are fully or partially 
 
 #### Payment network
 
-This is a network of payment senders and receivers, backed by underlying payment infrastructure. The backing assets of a money product are the least visible to consumers, however they affect and are heavily dependent upon regulatory factors. In case of {{UniDollar}} backed by {{UniLoan}}, the specific selection of backing assets as digital assets, mainly affects the other side of the market, namely the "digital asset backed loan" market;
+This is a network of payment senders and receivers, backed by underlying payment infrastructure. The backing assets of a money product are the least visible to consumers, however they affect and are heavily dependent upon regulatory factors. In case of \{\{UniDollar\}\} backed by \{\{UniLoan\}\}, the specific selection of backing assets as digital assets, mainly affects the other side of the market, namely the "digital asset backed loan" market;
 
 In order for a money product to be a good Medium of Exchange (MoE) it has to be widely available in markets that consumers want to participate. Low cost of access, as well as merchant and consumer desire to be part of a money payment network, determines the extent of the money's desirability as a MoE.
 
@@ -157,15 +157,15 @@ Numerous sub-segments exist in the greater "general-purpose money for consumers"
 - **Physical cash money (bank notes)** - Provided and backed by national governments. The most prominent of these globally are US Dollar bills ($). ToDo - estimated circulation of US $ bills and others.
 - **Digitized consumer money**
   - **Debit and credit card money** - facilitated by payment processing companies that connect credit card transactions to consumer credit accounts or debiting directly from the consumer's bank deposit account.
-  - **Bank digitized money **- network of bank deposit accounts and transfers facilitated by Automated Clearing House (ACH) - Examples: Chase, Wells Fargo, Bank of America, etc.
+  - **Bank digitized money** - network of bank deposit accounts and transfers facilitated by Automated Clearing House (ACH) - Examples: Chase, Wells Fargo, Bank of America, etc.
   - **Corporate digitized money** - Money apps - For example Venmo, PayPal, ApplePay
-- Digital stable-coin money
+- **Digital stable-coin money**
   - **Corporate stable-coin money** - Examples: USDCoin (USDC) backed by Coinbase, Tether dollar (USDT) backed by Tether, Gemini dollar (GUSD) backed by Gemini.
   - **State backed stable-coin money** - Example: digital Yuan or potential digital dollar
   - **Asset backed stable-coin money**
     - **DAO-governed asset-backed stable-coin money** - Example DAI backed by MakerDAO
-    - **Trust-minimized asset backed stable-coin money** - Example: {{PegDollar}} backed by {{PegLoan}} system
-      - [Potential evolution] **Trust minimal asset backed stable-coin money** - Potential example: {{PegWTF}} backed by {{WTF Foundation}} basket of assets ([See WTF for reference](https://blog.ethereum.org/2018/04/01/announcing-world-trade-francs-official-ethereum-stablecoin/)) and {{PegLoan}} system. Seriously, WTF!?!
+    - **Trust-minimized asset backed stable-coin money** - Example: \{\{PegDollar\}\} backed by \{\{PegLoan\}\} system
+      - [Potential evolution] **Trust minimal asset backed stable-coin money** - Potential example: \{\{PegWTF\}\} backed by \{\{WTF Foundation\}\} basket of assets ([See WTF for reference](https://blog.ethereum.org/2018/04/01/announcing-world-trade-francs-official-ethereum-stablecoin/)) and \{\{PegLoan\}\} system. Seriously, WTF!?!
 
 |Market segment|Reference value|Asset backing|Interest bearing|Payment network|SoV rating|MoE rating|UoA rating|
 |------|----------------|-------------|-------|--------|-----|----|------|
@@ -200,8 +200,8 @@ Numerous sub-segments exist in the greater "general-purpose money for consumers"
 |Digital US dollar ($)|State backed stable-coin money|National currency|Gold, National credit|No|Public blockchains|🟢High|🟡Medium|🟢High|
 |Digital Chinese Yuan|State backed stable-coin money|National currency|Gold, National credit|No|Public blockchains|🟢High-|🟡Medium-|🟢High|
 |DAI|DAO-governed asset-backed stable-coin money|US dollar ($)|Digital assets >100% (ETH) |Yes|Public blockchains|🟢High|🟡Medium|🟢High|
-|{{PegDollar}}|Trust-minimized asset backed stable-coin money|US dollar ($)|Digital assets >100% (commonly ETH) |Yes|Public blockchains|🟢High+|🟡Medium|🟢High|
-|{{PegWTF}}|Trust-minimal asset backed stable-coin money|US dollar ($)|Digital assets >100% (commonly ETH) |Yes|Public blockchains|🟢High++|🟡Medium|🟢High|
+|\{\{PegDollar\}\}|Trust-minimized asset backed stable-coin money|US dollar ($)|Digital assets >100% (commonly ETH) |Yes|Public blockchains|🟢High+|🟡Medium|🟢High|
+|\{\{PegWTF\}\}|Trust-minimal asset backed stable-coin money|US dollar ($)|Digital assets >100% (commonly ETH) |Yes|Public blockchains|🟢High++|🟡Medium|🟢High|
 
 ## Terms
 
