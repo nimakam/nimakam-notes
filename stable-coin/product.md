@@ -1,6 +1,6 @@
 # The products
 
-- {{PegDollar}} for consumers
+- \{\{PegDollar\}\} for consumers
 - {{PegLoan}} for other stakeholders such as financial investors
 
 > Note: Names inside `{{}}` symbols denote placeholder product names.
