@@ -1,5 +1,4 @@
 # The product
-
 - **\{\{PegDollar\}\}** for consumers is the main product we focus on
 - **\{\{PegLoan\}\}** for other stakeholders such as financial investors, is the periphery product that we will touch on.
 
