@@ -2,7 +2,7 @@
 
 This research proposal describes a **collateral-backed** **stable-coin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the stable-coin is pegged to the value of a widely accepted **reference currency**.
 
-A collateral backed stable-coin system is one that ensure then stable value of a digital token, based on securing backing collateral of equal or higher value. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. In case of our **MVP implemented on Ethereum**, the **native blockchain asset token** is **ETH** and the **reference currency** is **USD $**. Unlike other similar systems however, this proposal contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal believes that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** of the system.
+A collateral backed stable-coin system is one that ensure the stable value of a digital token, based on securing backing collateral of equal or higher value, and based on market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. In case of our *MVP implemented on Ethereum*, the *native blockchain asset token* is **ETH** and the *reference currency* is **USD ($)**. Unlike other similar systems however, this proposal contains *no on-chain governance process* and *no tokens for governance or equity*. The proposal believes that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** of the system.
 
 Other sections outline:
 
@@ -16,13 +16,12 @@ Section outline:
 - [Actors](#actors)
 - [Currencies](#currencies)
   - [Pegged currency money](#pegged-currency-money)
+  - [Reference currency](#reference-currency)
   - [Backing asset token](#backing-asset-token)
 - [Loan (debt position)](#loan-debt-position)
   - [Loan fee](#loan-fee)
+  - [Loan price feed allocation](#loan-price-feed-allocation)
   - [Liquidation process](#liquidation-process)
-  - [Liquidation dispute process](#liquidation-dispute-process)
-  - [Other loan features](#other-loan-features)
-  - [Simplifying changes to loans](#simplifying-changes-to-loans)
 - [Price feed](#price-feed)
   - [Price feed liquidity pool](#price-feed-liquidity-pool)
   - [Price feed delay and resolution](#price-feed-delay-and-resolution)
@@ -32,6 +31,7 @@ Section outline:
   - [Savings liquidity pool](#savings-liquidity-pool)
   - [Savings rate](#savings-rate)
 - [Automated monetary system](#automated-monetary-system)
+  - [Variable values](#variable-values)
 - [Notable constraint adjustments](#notable-constraint-adjustments)
   - [Loan taking process adjustment](#loan-taking-process-adjustment)
   - [Liquidation process adjustment](#liquidation-process-adjustment)
@@ -39,6 +39,7 @@ Section outline:
 - [Penalties](#penalties)
   - [Price feed delay and resolution penalty](#price-feed-delay-and-resolution-penalty)
 - [Appendix](#appendix)
+  - [Terms](#terms)
   - [Magic values](#magic-values)
   - [Front running resistance](#front-running-resistance)
   - [Volatility](#volatility)
@@ -47,64 +48,71 @@ Section outline:
 
 ## Actors
 
-- **Money users** - These are **regular consumers** that **use**, or **hold** the pegged currency in their blockchain-based **savings account**. The major target groups that could most benefit from such an offering are **the un-banked** and those with limited access to a **stable Store of Value** (SoV) from countries with dysfunctional monetary policies. This could also be used by the **early adopter community** of a public blockchain.
-- **Loan takers** - Most commonly existing **native token holders** that decide to **take a loan** against their holdings. The main incentive for this group consists of being **long native token**, while being able to **deploy its value**. They may also initially be **motivated by the technology** itself, however this is not a long-term sustainable incentive.
+- **Money users** - These are *regular consumers* that *use*, or *store* the pegged currency money in their blockchain-based *savings account*. The major target groups that could most benefit from such an offering are *the un-banked* and those with limited access to a *stable Store of Value* (SoV) from countries with dysfunctional monetary policies. This could also be used by the *early adopter community* of a public blockchain.
+- **Loan takers** - Most commonly existing *native token holders* that decide to *take a loan* against their holdings. The main incentive for this group consists of being *long native token*, while being able to *deploy its value*. They may also initially be *motivated by the technology* itself, however this is not a long-term sustainable incentive.
 - **Price feed providers** - Providers of accurate rates of exchange between native token, the reference asset as well as the pegged currency. These providers are expected to compete in establishing trust amongst the loan takers, and in return be monetarily compensated based on the level of trust they establish, and based on following the hard rules set by the loan system.
-- **Loan liquidators** - Liquidators **compete** with each other to monitor, speculate on the liquidation status of loans (debt positions), and **trigger liquidation** when they foresee **liquidation conditions** in accordance with the loan system's hard definition of liquidation.
+- **Loan liquidators** - Liquidators *compete* with each other to monitor, speculate on the liquidation status of loans (debt positions), and *trigger liquidation* when they foresee *liquidation conditions* in accordance with the loan system's hard definition of liquidation.
 
 ## Currencies
 
 The system supports pegging to any relatively stable real world currency, as well as other relatively stable baskets of assets, always backed with the most trust-minimized blockchain collateral (ETH in case of Ethereum). The main viable implementation of this system however will focus on the US dollar due to its relative ubiquity at time of this writing.
 
-- **Pegged currency** - ie Pegged USD aka pegged dollar - This is the custom programmed token (ERC 20 in Ethereum), represented on the public blockchain, that is being pegged to the real world referenced currency by the system.
-- **Reference currency** - ie USD $ - This is the real world currency, or unit of account, the pegged currency will be pegged to.
-- **Native value token** - ie ETH on Ethereum - This is the most trust-minimized asset token on the host blockchain and will always be the backing collateral token.
-
-Any user can create a new currency peg on the blockchain, by deploying the open source contract along with a token representing their pegged currency, as well as an initial price feed contract.
-
 ### Pegged currency money
 
-The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, is already (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US Dollar ($).
+The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, should already be (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US Dollar ($).
 
 The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of this functionality is described by the [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/);
 
 Additional functionality will be implemented to respectively "mint" or "burn" tokens upon "issuance" or "return" of the pegged currency on the loan contract.
+
+### Reference currency
+
+This is the real world currency, or unit of account, the pegged currency will be pegged to. For example, the US dollar ($) is the most commonly used reference currency in most existing stable-coin implementations.
+
+The system is designed such that it would work with any relatively stable currency, or basket of goods, assets and/or currencies. Any user can create a new currency peg to their target currency reference, by deploying the open source contracts including a custom token representing their pegged currency.
 
 ### Backing asset token
 
 As mentioned, any public blockchain's native asset token satisfies the role of backing asset given that it is likely to be:
 
 - The most trust-minimized asset token on the blockchain.
-- Widely used as a Store of Value (SoV) by the blockchain users.
+- Widely used as a Store of Value (SoV) by the blockchain users, and early adopters.
 
 It is essential for the system to prevent significant issuance of pegged currency, without securing a corresponding value of backing asset, per loan instance, and for the system as a whole. Similarly, it is crucial for the system to respond to backing asset release requests, when corresponding pegged currency is being returned to the system. In a healthy system, the value of the backing asset token is greater than the pegged currency by a healthy margin, in order to insure against the possibility of a major devaluation in that backing asset.
 
 ## Loan (debt position)
 
-Loans are the structures that hold the state and value of the collateral backing aspect of the system. They have the following notable properties:
+Loans (aka debt positions) are the logical structures that hold the state and value of the collateral backing aspect of the system. They have the following notable properties:
 
 - There is a separate loan contract instance per instance of real world loan taken
 - The loan contract holds the state and value related to each loan
 - The loan taker is the ultimate owner of the value contained on a loan instance, and directly interacts with it.
-- The greater system is consulted every time a change is made to the loan. Disallowed changes automatically revert the transaction.
+- The greater system is consulted every time a change is made to the loan. Changes disallowed by the main system, result in automatically reverted transactions.
+- A specific threshold of backing to issuance is considered healthy and enforced by the system. For example at one point in time: `backing / issuance = 150%`.
+
+Loans consist of the following state or calculated values:
+
+- Native token deposited into the contract
+- Pegged currency issued by the loan taker
+- Pegged currency stored in the loan
+- Fees accumulated since last structural change (Calculated)
+- Liquidation requests and state
 
 ### Loan fee
 
-Loan fees are varied based on the global equilibrium price of the pegged currency, in order to incentivize increase or decrease the pegged currency supply based on the creation or cloning of debt positions, and thus affect the equilibrium price of the pegged currency itself from the supply side.
+Loan takers pay a fee based on the value of the loan's issued pegged currency, and based on a variable daily percent rate (See *Loan fee rate* under [Variable values](#variable-values)) set by the main system's monetary policy engine. The fee has to be paid as part of structural changes made to the loan, including changes to allocation or issuance. For example, at a given point, the loan fee rate might be `4%` per year, (equivalent to `0.01096%` per day). Assuming no change to the rate (unlikely), the loan taker should expect to pay `$400` per year in fees on a loan that has issued `$10,000` worth of pegged currency, upon closing the loan. In reality, the yearly fee is determined by the sum of all daily rates throughout that year.
 
-### Liquidation process
+A part of the fees paid by loan takers, will go to the price feed providers. The specific value going to price feed providers is calculated based a weekly variable rate determined by the monetary engine (See *price feed revenue rate* under [Variable values](#variable-values)). This value is allocated to specific price feed providers based on the allocation table values (See [loan price feed allocation](#loan-price-feed-allocation)) of the loan.
 
-Liquidation can be proposed by any blockchain user, who agrees to put up a deposit, and ask for a specific debt liquidation position to be triggered, at the time of the request. However the actual decision would be triggered if the specific monetary conditions of the position merit it, and after the delayed dispute process also issues the validity of that request.
+The rest of the fees paid by loan takers, will go to the savings pool, to eventually be distributed to savings account owners based on the monetary engine's savings interest daily rate (See *Savings interest rate* under [Variable values](#variable-values)).
 
-### Liquidation dispute process
+### Loan price feed allocation
 
-- ToDo
+Every loan (aka debt position) can allocate one or many price feeds providers by weight for their loan. For a given loan, these allocations are weighted by percentages that add up to `100%`. For example: a loan may allocate `40%` to the price feed maintained by *Foundation X*, `35%` to *Rating company Y* and `25%` to *Financial company Z* for a total of `100%`.
 
-### Other loan features
+A part of the fees paid by loan takers, will eventually go to the price feed providers as revenue. The specific value going to price feed providers is calculated based a weekly variable rate determined by the monetary engine (See *price feed revenue rate* under [Variable values](#variable-values)). That value is distributed to specific price feed providers, based on the allocation table values of the loan. Loan takers are responsible for determining the allocation mentioned above, based on which price feed providers they trust and/or want to financially support.
 
-**Loan fee allocation process** - A portion of the loan fee paid by each loan taker to a given price feed provider, is directly proportional to the corresponding price feed's allocation in that specific debt position. This fee goes toward a pool of liquidity associated with the price feed provider. See below for details.
-
-**Price feed allocation table** - Every debt position can allocate by weight, one or many price feeds, which her position state will depend on. For a given loan, these allocations are weighted by percentages that add up to 100%. At the whole system level, these percentages are added together weighted by the value of each loan. For example a loan of value $100,000 that has two allocations A at 30% and B at 70%, will contribute to the system wide price feed allocation pools by $30,000 for A and $70,000 for B.
+At level of the entire system, we add up the total allocation values resulting from allocation percentages multiplied by the issuance value of each loan. For example consider a single loan with issuance value `$100,000`, that has three allocations A at `50%`, B at `35%`, C at `25%`. The single loan will contribute to the price feed providers' revenue pools by `$50,000` for A, `$35,000` for B and `$25,000` for C. If the whole system consisted of say `200` loans, that are same as the one above (very unlikely), the total allocation numbers for the price feeds will be `$10,000,000` for A, `$7,000,000` for B and `$5,000,000` for C. Based on a projected *price feed revenue rate* of say `1%` per year, the projected increase to each of their revenue pools would be `$100,000` for A, `$70,000` for B and `$50,000` for C.
 
 From the perspective of reducing risk of system capture, it is ideal that there be more price feeds allocations, and that they be easily changed in case of bad behavior by price feeds. On the other hand however, an excessive number of allocations will cause excessive gas cost and cognitive overhead for the loan takers and other stakeholders. An average of 3 allocations seems like a good target, thus a max value of 5 is reasonable. See [maximum price feed allocation](#magic-values).
 
@@ -114,35 +122,26 @@ Price feed allocation process is added as a separate call to the loan contract d
 - We aim to make allocation changes no more difficult than the initial allocation, and so, we will reuse the allocation process both for initial creation and subsequent changes made to allocation.
 - The level of complexity proposed does not exceed the loan takers assumed level of sophistication and tolerance for usability costs.
 
+### Liquidation process
+
+Liquidation can be proposed by any blockchain user, who agrees to put up a deposit, and request for a specific debt liquidation position to be triggered. However the final liquidation decision would be accepted only if the specific monetary conditions of the position merit it and after the delayed dispute process also issues the validity of that request.
+
 **Liquidation trigger decision** - A 100% allocation to one price feed will mean that liquidation decision will be solely made based on the price feed, and contents of the position itself. A combination of say 3 price feeds with 33.3% each will mean that liquidation condition will trigger only if all 3 price feeds are in approximate agreement, otherwise the position will have to go through the dispute resolution process.
 
-### Simplifying changes to loans
-
-Switching costs - In the market today, "moving" debt positions is easy and efficient in cases of transitioning between loan mechanisms (ie Maker and Compound), or between versions of the same debt position contract (ie Maker SAI to DAI).
-
-Marginal cost - Due to the large average value of debt position seen up to now, we can assume that recreating debt positions comes at marginal cost.
-
-Compared with the cases mentioned above, an equivalent efficiency can be achieved by just performing a position recreation every time a major change is made to the position. Using this simple mechanism has the potential of significantly simplify the contract logic and potential for mistakes. This can become a building block for a set of processes such as for updating loan fee allocations, and upgrading positions to future versions of the contract.
-
-The issue however is that a pool of pegged currency will be required to close the initial loan and open the other one. Such a pool would have to be separately managed
+-ToDo
 
 ## Price feed
 
-For each pegged currency the price feed provides 2 sets of exchange rates, ETH in reference currency, as well as in its pegged version. For the first viable case of pegged US dollar against ETH the required value sets are:
+The main responsibility of price feed providers is the truthful **daily** providing of **historical prices** to the contracts, consisting of 2 exchange rates, one for the native token in reference currency, and the other in its pegged version. These rates are expected to be the median rates based on volume. The system enforces having historical prices available within 1 day (See [maximum price feed delay](#magic-values)) enforced by an imposed penalty to the provider's revenue pool.
 
-- ETH / USD
-- ETH / Pegged USD
+For example, in our MVP implementation, this consists of  ETH value in USD as well as in pegged USD as reported accurately from exchange market activity. If there was `10,000` ETH traded for USD during the day, and `50%` of volume was under `$201.2` USD and the other `50%` was over `$201.2`, then `$201.2` should be reported as the ETH/USD price. Similarly, let's assume the Pegged USD was valued less than USD that day with the following median rate. The price provider would report the following:
 
-The system enforces having prices available within 1 day (See [maximum price feed delay](#magic-values)) enforced by a hard penalty. However price feeds can choose to provide their price records more frequently as they see fit with their business model.
-The system also enforces a minimum resolution of 1 hour (See [minimum price feed resolution](#magic-values)) as the space between price records.
+- ETH/USD = `201.2`
+- ETH/Pegged USD = `210.2`
 
-Price feed values are results of formulas based on a sample of known trade prices and volumes to each specific provider. The ideal case is for a provider to have full access to the universe of all legitimate trades along with their volume and price, and good faith providers should strive to do so. However due to many factors, including uncertainty around authenticity of info from some sources or exchanges, as well as pure technical limitations, each provider will choose a specific set of samples they can depend on, at any given time.
+Price feed values are results of formulas calculated from known market exchange prices and volumes. The ideal case is for all providers to have full access to the universe of all *legitimate* trades along with their volume and price, and good faith providers should strive to do so. However, due to many restraining factors, including uncertainty around authenticity of info from some sources or exchanges, as well as pure technical limitations, each provider will choose a specific set of samples they can depend on, at any given time. They should publish their methodology for compiling these historical prices, so the community can verify them in favor of higher level of trust and predictability for the ecosystem, as public good.
 
-For each time period corresponding to the feed resolution, price feed are expected to provide the following values from their sample:
-
-- Median.
-- Minimum and maximum within 34.1% (See [small cumulative range](#magic-values)) cumulative volume of the sample median - Equivalent to [μ-σ, μ+σ] in normal distribution.
-- Minimum and maximum within 47.7% (See [large cumulative range](#magic-values)) cumulative volume of the sample median - Equivalent to [μ-2σ, μ+2σ] in normal distribution.
+High trust providers are also expected to report something called **instant price** almost **immediately**, as they notice changes of over `1%`. This reporting by highly trusted providers, would be strongly encouraged by the ecosystem members (community) however there is no hard penalty imposed by the system itself.
 
 ### Price feed liquidity pool
 
@@ -182,6 +181,20 @@ Loan fees are also varied based on the global equilibrium price of the pegged cu
 
 ## Automated monetary system
 
+- ToDo
+
+### Variable values
+
+**Loan fee rate** - Is a daily rate set by the automated monetary system that determines the fee paid by loan takers upon structural changes made to their loan, such as allocation or issuance changes. For example, at a given point in time, the loan fee rate could be `0.01096%` per day (equivalent to `4%` per year). Assuming no future change to the rate (which is unlikely), the loan taker should project to pay `$400` per year in fees on a loan that has issued `$10,000` worth of pegged currency, upon closing the loan. The actual annual rate will be calculated by adding all the variable daily rates.
+
+The monetary policy engine aims to vary the rates based on the global equilibrium price of the pegged currency, in order to incentivize increase or decrease the pegged currency supply based on the creation or cloning of debt positions, and thus affect the equilibrium price of the pegged currency itself from the supply side.
+
+**Price feed revenue rate** - Is a weekly rate set by the automated monetary system that determines what percentage of total system issuance is expected to eventually be paid out to price feed providers. The revenue comes from part of the loan fee stream and so the price feed revenue daily rate has to always be lower than the loan fee daily rate. The rest of the loan fees will go into the savings pool to be paid out to savings account owners. For example, at a given point in time, the price feed revenue rate could be `0.01917%` per week (equivalent to `1%` per year). Assuming no future change to the rate (which is unlikely), a price feed provider can project its revenue pool to receive `$20,000` yearly assuming a total issuance allocation of `$2,000,000`. This could be the case if total system issuance is `$10,000,000` and the providers average weighted allocation percentage is `20%`.
+
+**Savings interest rate** - Is a daily rate set by the automated monetary system that determines the interest paid to owners of savings accounts. For example, at a given point in time, the savings interest rate can be `0.01096%` per day (equivalent to `4%` per year). Assuming no future change to the rate (which is unlikely), the savings account owner can project an interest of `$400` per year on a savings account balance of `$10,000`.
+
+- To Do
+
 ## Notable constraint adjustments
 
 In an ideal loan (debt position) system, one would expect perfect trust of the price feeds, very fine grained price feed resolution, and instantaneous response to loan taking requests or liquidation requests in appropriate conditions. However, given the constraints of highly decentralized protocols on public blockchain systems, as well as the urgent need for simplification, in order to reduce risks and increase efficiency, we choose to bend the ideal rules as long as these changes are communicated clearly to and are accepted by stakeholders, and as long as they result in a secure system overall.
@@ -212,14 +225,18 @@ All percent-based (%) penalties apply to the corresponding provider's price feed
 
 ## Appendix
 
+### Terms
+
+**Money** - A tool used by humans to exchange value. Any valuable object (such as a coffee mug) can theoretically be used as money, on occasion, as payment. However a good money candidate, can be used in more contexts. Gold, Bitcoin and Ether are all examples of asset moneys, that can be used for exchange on occasion, but are not necessarily the best option.
+
+**Currency** - A type of money that is commonly used in day to day commerce, as it is used and accepted by many buyers and merchants. Good currencies are stable in value and are therefore good Stores of Value (SoV). Good currencies also are used as Units of Account (UoA) by more people, and are accepted by more people as Medium of Exchange (MoE). US Dollars ($) is the example of a good currency money, so are Chinese Yuan, Japanese Yen, and Euro.
+
 ### Magic values
 
 In software engineering, magic values refer to constant values selected by the software author, that determine the constraints that the system operates under. The selection of these values often involves significant deliberation and requires some level of research and justification. It is always a good question to ask why a specific "magic value" was selected as opposed to higher or lower values.
 
-**Maximum price feed delay** - ~ 1 day - x blocks
-**Minimum price feed resolution** - ~ 1 hour - x blocks
-**Small cumulative range** - 68.2689492137% - Cumulative volume of the sample median, equivalent to values within [μ-σ, μ+σ] in [normal distribution](https://en.wikipedia.org/wiki/Normal_distribution).
-**Large cumulative range** - 95.4499736104% - Cumulative volume of the sample median, equivalent to values within [μ-2σ, μ+2σ] in [normal.distribution](https://en.wikipedia.org/wiki/Normal_distribution).
+**Maximum price feed delay** - 1 day - x seconds
+
 **Maximum price feed allocations** - 5
 
 ### Front running resistance
