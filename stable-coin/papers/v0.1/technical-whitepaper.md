@@ -1,6 +1,6 @@
 # \{\{PegLoan\}\}: A trust-minimized collateral-backed stable-coin system
 
-## Technical research whitepaper
+## Technical research whitepaper v0.1 [dynamic]
 
 >Notice: This document is a research proposal, and in no way makes promises about the full functionality of any derived implementation, nor does it represent a commitment to build, deploy or operate such a system. Its sole aims is to envision the process of defining, planning and productizing such a system and product.
 

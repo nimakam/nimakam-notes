@@ -1,6 +1,6 @@
 # \{\{PegDollar\}\}: Decentralized digital money for the masses
 
-## Business research whitepaper
+## Business research whitepaper v0.1 [dynamic]
 
 A widely available, dependable and easy-to-use digital currency, that people can buy, use, hold and collect interest on, without the constraints of banks.
 
