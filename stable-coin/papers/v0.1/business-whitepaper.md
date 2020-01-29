@@ -2,13 +2,19 @@
 
 ## Business research whitepaper v0.1 [dynamic]
 
-A widely available, dependable and easy-to-use digital currency, that people can buy, use, hold and collect interest on, without the constraints of banks.
+>Notice: This document is a research proposal, and in no way makes promises about the full functionality of any derived implementation, nor does it represent a commitment or intent to build, deploy or operate such a system. Its sole aims is to envision the process of defining, planning and productizing such a system and product.
 
->Notice: This document is a research proposal, and in no way makes promises about the full functionality of any derived implementation, nor does it represent a commitment to build, deploy or operate such a system. Its sole aims is to envision the process of defining, planning and productizing such a system and product.
+### Executive summary
+
+- ToDo
+
+## Vision
+
+A widely available, dependable and easy-to-use digital currency, that people can buy, use, hold and collect interest on, without the constraints of banks.
 
 ## Goals
 
-- **Digital money for the masses** - Provide everyday people with a usable (requiring minimal cognitive load) and competitive (interest bearing) digital stable-coin based on blockchain technology.
+- **Digital money for the masses** - Provide everyday people with a usable (requiring minimal cognitive load) and competitive (interest bearing) digital stablecoin based on blockchain technology.
 - **Wide availability** - A currency cannot be easy-to-use if it is not widely accepted by a network of people and businesses, and it is not widely accepted if doesn't grow past a tipping point, where mainstream financial ecosystem players are incentivized to support it.
 - **Maximal decentralization** - Eliminate risk of capture and minimize need for centralized trust in order to increase chance of adoption, and to significantly reduce risk of failure.
 - **Incentivization** - Provide loan takers with sufficient incentives to get loans (open debt positions with collateral), competitively compared to other market solutions. Provide system maintainers with a competitive but profitable business model that incentivizes and guides them into constructive behavior.
@@ -17,7 +23,7 @@ A widely available, dependable and easy-to-use digital currency, that people can
 ## Implicit assumptions
 
 - **Blockchain technology disrupting finance** - Progressive digitization and decentralization of financial assets and processes through use of blockchain technology will increase the efficiency of building and operating financial systems by orders of magnitude.
-- **Collateral-backed stable-coins** - Best known (state of the art) method for creating a blockchain stable coin is through using digital assets as collateral on a smart contract.
+- **Collateral-backed stablecoins** - Best known (state of the art) method for creating a blockchain stable coin is through using digital assets as collateral on a smart contract.
 
 ## Product basics
 
@@ -32,11 +38,11 @@ There are many other available cryptocurrencies representing the US Dollar, howe
 
 ## Assumptions
 
-- **Good money** - The best digital money for the masses is a US dollar $ stable-coin, that returns interest, has high liquidity, and is widely accepted in people's every day financial ecosystems. The following are properties people look for in good money:
+- **Good money** - The best digital money for the masses is a US dollar $ stablecoin, that returns interest, has high liquidity, and is widely accepted in people's every day financial ecosystems. The following are properties people look for in good money:
   - **UofA** - Unit of Account - In the world today, the most usable Unit of Account (UoA) is the US dollar $, due to the low cognitive load of understanding and using it.
   - **MoE** - Medium of Exchange - High liquidity and network effects (availability throughout the financial system) of an asset are pre-requisites for it becoming a good Medium of Exchange (MoE).
-  - **SoV** - Store of Value - Functional stable-coins, especially ones bearing interest are considered good Stores of Value (SoV).
-- **Interest** - An interest bearing stable-coin has significant competitive advantage compared to real world stable currencies, and is on par with other on-chain alternatives such as DAI. A money product that bears interest is a better Store of Value (SoV), given that the value actually increases in time.
+  - **SoV** - Store of Value - Functional stablecoins, especially ones bearing interest are considered good Stores of Value (SoV).
+- **Interest** - An interest bearing stablecoin has significant competitive advantage compared to real world stable currencies, and is on par with other on-chain alternatives such as DAI. A money product that bears interest is a better Store of Value (SoV), given that the value actually increases in time.
 - **Achieving decentralization** - In general, decentralization is best achieved through permission-less-ness, censorship-resistance, and minimizing need for having a central actor. It improves the SoV aspect of the product by decreasing its long term risk.
 - **Default collateral** - ETH is currently the most trust minimized programmable digital asset available, and is supported by a considerably decentralized Ethereum blockchain that is permission-less, censorship-resistant, relatively secure, and with a high promise of wide adoption.
   - Bitcoin currently does not seem to fit the (easy) programmability requirement, however it offers higher security, as well as many other positive qualities. At the same time, it has not developed sufficient financial ecosystem network effects. That said, exploring the Bitcoin space remains an option.
@@ -52,7 +58,7 @@ Even though \{\{PegLoan\}\} provides a different financial service compared to H
 
 Uniswap is a maximally decentralized exchange smart contract, that is permission-less, censorship resistant and unstoppable. After the contract's finalization and deployment by original author, no one (not even the author) has any control over its operation. The contract will run as long as Ethereum 1.0 continues, and has been available to anyone with an internet connection, to be used in performing token exchanges or profiting by providing liquidity.
 
-If done right, \{\{PegLoan\}\} and its default US dollar stable-coin \{\{PegDollar\}\}, will have most or all of the important properties of Uniswap, including its level of decentralization. After deployment and finalization, the \{\{PegLoan\}\} smart contract, should no longer be controlled by anyone, and be available to all Ethereum users.
+If done right, \{\{PegLoan\}\} and its default US dollar stablecoin \{\{PegDollar\}\}, will have most or all of the important properties of Uniswap, including its level of decentralization. After deployment and finalization, the \{\{PegLoan\}\} smart contract, should no longer be controlled by anyone, and be available to all Ethereum users.
 
 ### Tip of the hat to MakerDAO
 
@@ -60,7 +66,7 @@ This proposal recognizes standing on the shoulder of Rune Christensen, the Maker
 
 ## Technical features
 
-In more technical terms, \{\{PegLoan\}\} is a trust-minimized, governance-minimized, capital efficient, collateral-backed stable-coin system on Ethereum that only works with ETH as collateral and has no formal governance process or token. It focuses on one stable currency pegged to the US dollar, given the minimal level of cognitive load required for everyday use of a US dollar digital currency. However, it is possible for anyone to copy the ideas and open source code behind \{\{PegLoan\}\} to deploy new instances of the system targeting different currencies or other baskets of assets.
+In more technical terms, \{\{PegLoan\}\} is a trust-minimized, governance-minimized, capital efficient, collateral-backed stablecoin system on Ethereum that only works with ETH as collateral and has no formal governance process or token. It focuses on one stable currency pegged to the US dollar, given the minimal level of cognitive load required for everyday use of a US dollar digital currency. However, it is possible for anyone to copy the ideas and open source code behind \{\{PegLoan\}\} to deploy new instances of the system targeting different currencies or other baskets of assets.
 
 - Fully decentralized operation, lowering chance of capture or rent seeking
 - Better capital efficiency due to elimination of governance token
@@ -126,7 +132,7 @@ In order for a money product to be a good Medium of Exchange (MoE) it has to be 
 
 For the greater market segment please see [market categorization](#market-categorization) breakdown, based on features and desired properties, for more information.
 
-If we focus on direct competition, the stable-coin market segment is what we should consider. Many stable-coin competitors exist as of this writing, ranging from centrally issued ones, to automated ones like DAI by MakerDAO. We believe all of these competitors have positioned themselves with a lower level of optimizations around trust minimization, risk minimization, capital efficiency, and governance minimization, that significantly lowers their potential for long-term success. These other options, either depend on a centralized entity for issuance, or for governance, and often do not efficiently flow capital through the system.
+If we focus on direct competition, the stablecoin market segment is what we should consider. Many stablecoin competitors exist as of this writing, ranging from centrally issued ones, to automated ones like DAI by MakerDAO. We believe all of these competitors have positioned themselves with a lower level of optimizations around trust minimization, risk minimization, capital efficiency, and governance minimization, that significantly lowers their potential for long-term success. These other options, either depend on a centralized entity for issuance, or for governance, and often do not efficiently flow capital through the system.
 
 Below is a tabular representation of the product's extended competition, as represented by category leaders and notable examples:
 
@@ -139,13 +145,13 @@ Below is a tabular representation of the product's extended competition, as repr
 |Venmo|Corporate digitized money|US dollar ($)|Consumer deposit, corporate credit|No|Money app|🟢High|🟡Medium|🟢High|
 |PayPal|Corporate digitized money|US dollar ($)|Consumer deposit, corporate credit|No|Money app, payment provider|🟢High|🟢High|🟢High|
 |WeChat Pay|Corporate digitized money|Chinese Yuan|Consumer deposit, corporate credit|No|Money app, payment provider|🟢High|🟢High++|🟢High|
-|Tether|Corporate stable-coin money|US dollar ($)|Corporate deposit and credit (<100%)|No|Public blockchains|🟡Medium+|🟡Medium|🟢High|
-|Coinbase USDCoin (USDC)|Corporate stable-coin money|US dollar ($)|Corporate deposit (100%)|No|Public blockchains|🟢High|🟡Medium|🟢High|
-|Digital US dollar ($)|State backed stable-coin money|National currency|Gold, National credit|No|Public blockchains|🟢High|🟡Medium|🟢High|
-|Digital Chinese Yuan|State backed stable-coin money|National currency|Gold, National credit|No|Public blockchains|🟢High-|🟡Medium-|🟢High|
-|DAI|DAO-governed asset-backed stable-coin money|US dollar ($)|Digital assets >100% (ETH) |Yes|Public blockchains|🟢High|🟡Medium|🟢High|
-|**\{\{PegDollar\}\}**|**Trust-minimized asset backed stable-coin money**|**US dollar ($)**|**Digital assets >100% (commonly ETH)**|**Yes**|**Public blockchains**|**🟢High+**|**🟡Medium**|**🟢High**|
-|Imaginary product [\{\{PegWTF\}\}](#pegwtf)|asset backed stable-coin money|US dollar ($)|Digital assets >100% (commonly ETH) |Yes|Public blockchains|🟢High++|🟡Medium|🟢High|
+|Tether|Corporate stablecoin money|US dollar ($)|Corporate deposit and credit (<100%)|No|Public blockchains|🟡Medium+|🟡Medium|🟢High|
+|Coinbase USDCoin (USDC)|Corporate stablecoin money|US dollar ($)|Corporate deposit (100%)|No|Public blockchains|🟢High|🟡Medium|🟢High|
+|Digital US dollar ($)|State backed stablecoin money|National currency|Gold, National credit|No|Public blockchains|🟢High|🟡Medium|🟢High|
+|Digital Chinese Yuan|State backed stablecoin money|National currency|Gold, National credit|No|Public blockchains|🟢High-|🟡Medium-|🟢High|
+|DAI|DAO-governed asset-backed stablecoin money|US dollar ($)|Digital assets >100% (ETH) |Yes|Public blockchains|🟢High|🟡Medium|🟢High|
+|**\{\{PegDollar\}\}**|**Trust-minimized asset backed stablecoin money**|**US dollar ($)**|**Digital assets >100% (commonly ETH)**|**Yes**|**Public blockchains**|**🟢High+**|**🟡Medium**|**🟢High**|
+|Imaginary product [\{\{PegWTF\}\}](#pegwtf)|asset backed stablecoin money|US dollar ($)|Digital assets >100% (commonly ETH) |Yes|Public blockchains|🟢High++|🟡Medium|🟢High|
 
 ### Market categorization
 
@@ -156,13 +162,13 @@ Numerous sub-segments exist in the greater "general-purpose money for consumers"
   - **Debit and credit card money** - facilitated by payment processing companies that connect credit card transactions to consumer credit accounts or debiting directly from the consumer's bank deposit account.
   - **Bank digitized money** - network of bank deposit accounts and transfers facilitated by Automated Clearing House (ACH) - Examples: Chase, Wells Fargo, Bank of America, etc.
   - **Corporate digitized money** - Money apps - For example Venmo, PayPal, ApplePay
-- **Digital stable-coin money**
-  - **Corporate stable-coin money** - Examples: USDCoin (USDC) backed by Coinbase, Tether dollar (USDT) backed by Tether, Gemini dollar (GUSD) backed by Gemini.
-  - **State backed stable-coin money** - Example: digital Yuan or potential digital dollar
-  - **Asset backed stable-coin money**
-    - **DAO-governed asset-backed stable-coin money** - Example DAI backed by MakerDAO
-    - **Trust-minimized asset backed stable-coin money** - Example: \{\{PegDollar\}\} backed by \{\{PegLoan\}\} system
-      - [Imaginary product] **Trust minimal asset backed stable-coin money** - See Imaginary product [\{\{PegWTF\}\}](#pegwtf).
+- **Digital stablecoin money**
+  - **Corporate stablecoin money** - Examples: USDCoin (USDC) backed by Coinbase, Tether dollar (USDT) backed by Tether, Gemini dollar (GUSD) backed by Gemini.
+  - **State backed stablecoin money** - Example: digital Yuan or potential digital dollar
+  - **Asset backed stablecoin money**
+    - **DAO-governed asset-backed stablecoin money** - Example DAI backed by MakerDAO
+    - **Trust-minimized asset backed stablecoin money** - Example: \{\{PegDollar\}\} backed by \{\{PegLoan\}\} system
+      - [Imaginary product] **Trust minimal asset backed stablecoin money** - See Imaginary product [\{\{PegWTF\}\}](#pegwtf).
 
 #### Notable exclusions
 
@@ -236,6 +242,6 @@ The "Digital asset backed loan" market is one that is separate from the "consume
 
 ### PegWTF
 
-\{\{PegWTF\}\} is an imaginary money product and successor to \{\{PegDollar\}\}, based on the imaginary WTF (World Trade Francs) Unit of Account, defined and maintained by the also imaginary \{\{WTF Foundation\}\}, as a universally agreed-upon and stable basket of goods, assets and/or currencies. \{\{PegWTF\}\} is based on the same \{\{PegLoan\}\} system as the current research proposal, though it uses WTF as the reference currency.
+\{\{PegWTF\}\} is an imaginary money product and successor to \{\{PegDollar\}\}, based on the imaginary WTF (World Trade Francs) Unit of Account, defined and maintained by the also imaginary \{\{WTF Foundation\}\}, as a universally agreed-upon and stable basket of goods, assets and/or currencies. \{\{PegWTF\}\} is based on the same \{\{PegLoan\}\} system as described in the current research proposal, though it uses WTF as its reference currency.
 
 See [WTF](https://blog.ethereum.org/2018/04/01/announcing-world-trade-francs-official-ethereum-stablecoin/) for reference. Seriously though, WTF!?!

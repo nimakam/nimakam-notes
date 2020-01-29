@@ -1,284 +1,212 @@
-const PeggedToken = artifacts.require("PeggedToken");
-const System = artifacts.require("System");
-const SystemFeeds = artifacts.require("SystemFeeds");
-const SystemLoans = artifacts.require("SystemLoans");
-const Loan = artifacts.require("Loan");
-const PriceFeed = artifacts.require("PriceFeed");
 const TestPriceFeedController = artifacts.require("TestPriceFeedController");
-const TOKEN_DECIMALS = 18;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-contract('PriceFeed', accounts => {
-    const systemCreator = accounts[0];
-    const moneyUserAccount = accounts[1];
-    const loanOwner = accounts[2];
-    const priceFeedOwner = accounts[3];
+contract('PriceFeed', accounts => {  
     let helpers = require("./helpers.js");
     let exceptions = require("./exceptions.js");
-
-    let system, systemFeeds;
-    let systemFirstTime;
+    let contracts, users;
+    let defaultPriceFeed;
 
     before(async function () {
-        system = await System.deployed()
-        systemFeeds = await SystemFeeds.deployed()
-        systemLoans = await SystemLoans.deployed()
+        contracts = await helpers.ensureContractsDeployed();
+        users = helpers.getUsers(accounts);
 
-        let firstTime = await system.firstTime.call();
-        systemFirstTime = parseInt(firstTime.toString());
+        let ethPrice = 200.0;
+        let pegPrice = 1.0;
+        let ethDeposit = 1.23456;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        
+        defaultPriceFeed = await helpers.windDownAndBootstrapSystem(contracts, users, ethDeposit, currencyIssuance, ethPrice, pegPrice);
+     });
 
-        await systemFeeds.createPriceFeed({ from: priceFeedOwner })
-        newPriceFeedAddress1 = await systemFeeds.lastNewAddress.call()
-        await systemFeeds.createPriceFeed({ from: priceFeedOwner })
-        newPriceFeedAddress2 = await systemFeeds.lastNewAddress.call()
-
-        const emptyAllocation = { priceFeedAddress: ZERO_ADDRESS, percentAllocation: 0, isAllocation: false }
-        const singleAllocation1 = { priceFeedAddress: newPriceFeedAddress1.toString(), percentAllocation: 100, isAllocation: true }
-        singleAllocations = [singleAllocation1, emptyAllocation, emptyAllocation, emptyAllocation, emptyAllocation]
-
-        await helpers.advanceTime(86400); // Push clock forward 1 day to avoid conflicts. and to make sure priceDay is at least 1, so it does not conflict with lastFinalizedDay=0
-
-    });
-
-    const emptyAllocation = {priceFeedAddress: ZERO_ADDRESS, percentAllocation: 0, isAllocation: false };
-    function getAllocation(address, allocation, isAllocation = true) { return {priceFeedAddress: address, percentAllocation: allocation, isAllocation: isAllocation } }
-    function getAllocations(allocation1 , allocation2 = emptyAllocation, allocation3 = emptyAllocation, allocation4 = emptyAllocation, allocation5 = emptyAllocation) { return [allocation1, allocation2, allocation3, allocation4, allocation5] }
-
-
+    // See [External account controller](./scenarios.md#external-account-controller)
     it('can be created by external user', async () => {
-        const newPriceFeed = await createPriceFeed()
+        await contracts.systemFeeds.createPriceFeed({ from: users.priceFeedOwner })
+        const newPriceFeedAddress = await contracts.systemFeeds.lastNewAddress.call()
+        const newPriceFeed = await helpers.PriceFeed.at(newPriceFeedAddress)
 
         let readOwnerAddress = await newPriceFeed.owner.call()
-        assert.equal(priceFeedOwner, readOwnerAddress)
+        assert.equal(users.priceFeedOwner, readOwnerAddress)
 
-        let priceFeedStruct = await systemFeeds.priceFeedMap.call(newPriceFeed.address)
+        let priceFeedStruct = await contracts.systemFeeds.priceFeedMap.call(newPriceFeed.address)
         let isPriceFeed = priceFeedStruct.isPriceFeed
         assert.isTrue(isPriceFeed)
 
         const priceFeedSystemAddress = await newPriceFeed.system.call()
-        assert.equal(system.address, priceFeedSystemAddress)
+        assert.equal(contracts.system.address, priceFeedSystemAddress)
     });
 
-    async function createPriceFeed() {
-        await systemFeeds.createPriceFeed({ from: priceFeedOwner })
-        const newPriceFeedAddress = await systemFeeds.lastNewAddress.call()
-        const newPriceFeed = await PriceFeed.at(newPriceFeedAddress)
-        return newPriceFeed;
-    }
-
+    // See [Contract controller](./scenarios.md#contract-controller)
     it('can be created by controller contract', async () => {
-        const priceFeedControllerOwner = priceFeedOwner;
-        const testPriceFeedController = await TestPriceFeedController.new(systemFeeds.address, { from: priceFeedControllerOwner })
+        const priceFeedControllerOwner = users.priceFeedOwner;
+        const testPriceFeedController = await TestPriceFeedController.new(contracts.systemFeeds.address, { from: priceFeedControllerOwner })
 
         let readControllerOwnerAddress = await testPriceFeedController.owner.call()
-        assert.equal(priceFeedOwner, readControllerOwnerAddress)
+        assert.equal(users.priceFeedOwner, readControllerOwnerAddress)
 
         let readPriceFeedAddress = await testPriceFeedController.priceFeed.call()
-        let newPriceFeed = await PriceFeed.at(readPriceFeedAddress)
+        let newPriceFeed = await helpers.PriceFeed.at(readPriceFeedAddress)
 
-        let priceFeedStruct = await systemFeeds.priceFeedMap.call(readPriceFeedAddress)
+        let priceFeedStruct = await contracts.systemFeeds.priceFeedMap.call(readPriceFeedAddress)
         let isPriceFeed = priceFeedStruct.isPriceFeed
         assert.isTrue(isPriceFeed)
 
         const priceFeedSystemAddress = await newPriceFeed.system.call()
-        assert.equal(system.address, priceFeedSystemAddress)
+        assert.equal(contracts.system.address, priceFeedSystemAddress)
 
-        await helpers.advanceTime(86400); // Push clock forward 1 day to avoid conflicts. and to make sure priceDay is at least 1, so it does not conflict with lastFinalizedDay=0
-  
-        let priceTime = await helpers.latestTimestamp()
-        let advancedTime = 86400;
-        let callTime = await helpers.advanceTime(advancedTime);
-        let timeDifference = callTime - (advancedTime + priceTime);
-        assert.isTrue(timeDifference >= 0 && timeDifference <= 5) // Intermittently the time may advance by 1 second due to timing
-
-
-        const historicalPrice = { medianEthRate: 200, medianPegRate: 1.0, priceTime: priceTime, callTime: callTime }
-        await testPriceFeedController.postHistoricalPrice(historicalPrice, { from: priceFeedControllerOwner })
+        let priceTime = await helpers.advanceOneDay();
+        const delayedPrice = helpers.getDelayedPriceStruct(200.0, 1.0, priceTime)
+        await testPriceFeedController.reportDelayedPrices(delayedPrice, { from: priceFeedControllerOwner })
     });
 
+    // See [Feed reporting delayed prices](./scenarios.md#feed-reporting-delayed-prices)
+    it('can be used to report delayed prices', async () => {
+        let ethPrice = 200.0;
+        let pegPrice = 1.1;
+        let ethDeposit = 1.2345678;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+
+        // Bootstrap the price feed by reporting initial prices, and allocating issuance using a new loan 
+        let newPriceFeed = await helpers.bootstrapSystem(contracts, users, ethDeposit, currencyIssuance, ethPrice, pegPrice);
+
+        // Report prices for the next day
+        await helpers.advanceOneDayAndReportPrice(users, newPriceFeed, ethPrice, pegPrice);
+
+        // Verify the price feed general state
+        let priceFeedStruct = await helpers.getFeedState(contracts, newPriceFeed)
+        assert.equal(helpers.toOnChainDouble(ethPrice), priceFeedStruct.lastEthPrice);
+
+        // Verify the processing state index is valid
+        let stateIndex = parseInt(priceFeedStruct.processingStateIndex.toString());
+        assert.isTrue(stateIndex >= 0 && stateIndex < helpers.MEDIUM_TRUST_FEEDS);
+
+        // Verify the processing state contents
+        let feedState = await helpers.getProcessingState(contracts, stateIndex);
+        assert.equal(helpers.toOnChainString(ethPrice), feedState.ethPrice);
+        assert.equal(helpers.toOnChainString(pegPrice), feedState.pegPrice);
+        assert.equal(newPriceFeed.address, feedState.priceFeedAddress);
+        assert.equal(true, feedState.isProcessed);
+    });
+
+    // See [Feed reporting instant prices](./scenarios.md#feed-reporting-instant-prices)
     it('can be used to report instant prices', async () => {
-        const newPriceFeed = await createPriceFeed()
+        let ethPrice = 200.0;
+        let instantEthPrice = 210.2;
+        let pegPrice = 1.2;
+        let ethDeposit = 12.3456789;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
 
-        //await helpers.advanceTime(86400); // Push clock forward 1 day to avoid conflicts. and to make sure priceDay is at least 1, so it does not conflict with lastFinalizedDay=0
-        let priceTime = await helpers.latestTimestamp()
-        let advancedTime = 3600;
-        let callTime = await helpers.advanceTime(advancedTime);
-        let timeDifference = callTime - (advancedTime + priceTime);
-        assert.isTrue(timeDifference >= 0 && timeDifference <= 5) // Intermittently the time may advance by 1 second due to timing
+        // Bootstrap the price feed by reporting initial prices, and allocating issuance using a new loan 
+        let newPriceFeed = await helpers.bootstrapSystem(contracts, users, ethDeposit, currencyIssuance, ethPrice, pegPrice);
 
-        const instantPrice = { medianEthRate: 210.2 * 10 ** 10, priceTime: priceTime, callTime: callTime }
-        await newPriceFeed.postInstantPrice(instantPrice, { from: priceFeedOwner })
+        // Report prices for the next day to finalize processing previous day
+        await helpers.advanceOneDayAndReportPrice(users, newPriceFeed, ethPrice, pegPrice);
+
+        let [instantReportingState, instantPrice] = await helpers.getInstantPriceAndState(contracts);
+        assert.equal(helpers.InstantReportingState.Empty, instantReportingState);
+        assert.equal(0, instantPrice)
+
+        await newPriceFeed.reportInstantPrice(helpers.toOnChainString(instantEthPrice), { from: users.priceFeedOwner });
+     
+        ([instantReportingState, instantPrice] = await helpers.getInstantPriceAndState(contracts));
+        assert.equal(helpers.InstantReportingState.Stable, instantReportingState);
+        assert.equal(helpers.toOnChainDouble(instantEthPrice), instantPrice)
     });
 
-    it('can be used to report historical prices', async () => {
-        const newPriceFeed = await createPriceFeed()
+    // See [Price feed trust transitions](./scenarios.md#price-feed-trust-transitions)
+    it('can transition up in trust order then transition down', async () => {
+        let ethPrice = 200.0;
+        let pegPrice = 1.0;
+        let ethDeposit = 1.2345678;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        let otherEthDeposit = 2.2345678;
+        let otherCurrencyIssuance = helpers.roundPrice(otherEthDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        let additionalEthDeposit = 2.0;
+        let additionalCurrencyIssuance = helpers.roundPrice(additionalEthDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+       
+        const priceFeed = await helpers.createPriceFeed(contracts, users)
+        const otherPriceFeed = await helpers.createPriceFeed(contracts, users)
+        let loan = await helpers.createLoanDepositAndIssue(contracts, users, ethDeposit, currencyIssuance, priceFeed);
+        let otherLoan = await helpers.createLoanDepositAndIssue(contracts, users, otherEthDeposit, otherCurrencyIssuance, otherPriceFeed);
 
-        let ethValue = 123456;
-        await createLoanWithAllocation(newPriceFeed, ethValue)
+        // Verify that the price feed is not part of trusted feed list
+        let priceFeedState = await helpers.getFeedState(contracts, priceFeed);
+        assert.equal(priceFeedState.finalizedStateIndex, 2 ** 32 - 1)
+        assert.equal(priceFeedState.processingStateIndex, 2 ** 32 - 1)
 
-        // await advanceOneDay(); // Push clock forward 1 day to avoid conflicts. and to make sure priceDay is at least 1, so it does not conflict with lastFinalizedDay=0
-        let [priceTime, callTime] = await advanceOneDay()
+        let priceTime = await helpers.advanceOneDay()
+        await helpers.reportDelayedPrice(users, priceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime)
 
-        await systemFeeds.flipState()
+        // Verify that price feed is now part of processing trusted feed list
+        let [finalizedFeedState, processingFeedState] = await helpers.getFeedProcessStates(contracts, priceFeed);
+        await helpers.getFeedProcessStates(contracts, otherPriceFeed);        
+        assert.equal(undefined, finalizedFeedState)
+        assert.equal(priceFeed.address, processingFeedState.priceFeedAddress)
 
-        const historicalPrice = { medianEthRate: 200 * 10 ** 10, medianPegRate: 1 * 10 ** 10, priceTime: parseInt(priceTime.toString()), callTime: parseInt(callTime.toString()) }
-        await newPriceFeed.postHistoricalPrice(historicalPrice, { from: priceFeedOwner })
+        let additionalLoan = await helpers.createLoanDepositAndIssue(contracts, users, additionalEthDeposit, additionalCurrencyIssuance, priceFeed);
+        priceTime = await helpers.advanceOneDay()
+        await helpers.reportDelayedPrice(users, priceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime);
 
-        let finalizedList = await getFinalizedStateArray();
-        let initializedList = await getInitializedStateArray();
-        await getPriceFeedStruct(newPriceFeed.address);
+        // Verify that price feed is higher than the other price feed in trusted list
+        priceFeedState = await helpers.getFeedState(contracts, priceFeed);
+        let otherPriceFeedState = await helpers.getFeedState(contracts, otherPriceFeed);
+        assert.isTrue(priceFeedState.processingStateIndex < otherPriceFeedState.processingStateIndex);
+
+        priceTime = await helpers.advanceOneDay()
+        await additionalLoan.returnCurrency(helpers.toOnChainString(additionalCurrencyIssuance - 0.1), {from: users.loanOwner})
+        await otherLoan.returnCurrency(helpers.toOnChainString(0.1), {from: users.loanOwner})
+        await helpers.reportDelayedPrice(users, priceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime);
+
+        // Verify that price feed is now lower than the other price feed in trusted list
+        priceFeedState = await helpers.getFeedState(contracts, priceFeed);
+        otherPriceFeedState = await helpers.getFeedState(contracts, otherPriceFeed);
+        assert.isTrue(priceFeedState.processingStateIndex > otherPriceFeedState.processingStateIndex);   
     });
 
-    async function advanceOneDay()
-    {
-        let priceTime = await helpers.latestTimestamp()
-        console.log(priceTime)
-        let advancedTime = 86400;
-        let callTime = await helpers.advanceTime(advancedTime);
-        let timeDifference = callTime - (advancedTime + priceTime);
-        assert.isTrue(timeDifference >= 0 && timeDifference <= 5) // Intermittently the time may advance by 1 second due to timing
-        return [priceTime, callTime];
-    }
+    // See [Price feed banning](./scenarios.md#price-feed-banning)
+    it('can ban feeds that skip more than a week', async () => {
+        let ethPrice = 200.0;
+        let pegPrice = 1.1;
+        let ethDeposit = 1.2345678;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        let otherEthDeposit = 2.2345678;
+        let otherCurrencyIssuance = helpers.roundPrice(otherEthDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+    
+        const priceFeed = await helpers.createPriceFeed(contracts, users)
+        const otherPriceFeed = await helpers.createPriceFeed(contracts, users)
+        let priceTime = await helpers.latestTimestamp() - helpers.SECONDS_PER_DAY;
+        await helpers.reportDelayedPrice(users, priceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.createLoanDepositAndIssue(contracts, users, ethDeposit, currencyIssuance, priceFeed);
+        await helpers.createLoanDepositAndIssue(contracts, users, otherEthDeposit, otherCurrencyIssuance, otherPriceFeed);
 
-    async function getPriceFeedStates(priceFeedAddress)
-    {
-        let finalizedFeedState = getPriceFeedState(await getFinalizedStateArray(), priceFeedAddress);
-        let initializedFeedState = getPriceFeedState(await getInitializedStateArray(), priceFeedAddress);
-        return [finalizedFeedState, initializedFeedState];
-    }
+        // Get the price feeds into the trusted feed list
+        priceTime = await helpers.advanceOneDay()
+        await helpers.reportDelayedPrice(users, priceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime)
 
-    async function getPriceFeedStatesFromMap(priceFeedAddress)
-    {
-        let priceFeedStruct = await systemFeeds.priceFeedMap.call(priceFeedAddress)
-        let finalizedStateArray = await getFinalizedStateArray(true);
-        let initializedStateArray = await getInitializedStateArray(true)
-        let finalizedFeedState = finalizedStateArray[priceFeedStruct.finalizedStateIndex]
-        let initializedFeedState = initializedStateArray[priceFeedStruct.initializedStateIndex]
-        return [finalizedFeedState, initializedFeedState];
-    }
+        // Report prices after 4 days
+        priceTime = await helpers.advanceTime(helpers.SECONDS_PER_DAY * 4) - helpers.SECONDS_PER_DAY;
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime)
 
-    async function postPrice(priceFeed, ethPrice, pegPrice, priceTime, callTime)
-    {
-        let historicalPrice = { medianEthRate: ethPrice * 10 ** 10, medianPegRate: pegPrice * 10 ** 10, priceTime: priceTime, callTime: callTime }
-        await priceFeed.postHistoricalPrice(historicalPrice, { from: priceFeedOwner })
-    }
+        // Report prices after 4 days
+        priceTime = await helpers.advanceTime(helpers.SECONDS_PER_DAY * 4) - helpers.SECONDS_PER_DAY;
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime)
 
-    it('can transition up in trust order the transition down', async () => {
-        const priceFeed = await createPriceFeed()
-        const otherPriceFeed = await createPriceFeed()
+        // Verify the feed that reports every 4 days is not banned, one that skips 8 days is banned
+        let priceFeedState = await helpers.getFeedState(contracts, priceFeed);
+        let otherPriceFeedState = await helpers.getFeedState(contracts, otherPriceFeed);
+        assert.equal(true, priceFeedState.isBanned);
+        assert.equal(false, otherPriceFeedState.isBanned);
 
-        let ethValue = 23456;
-        let loan = await createLoanWithAllocation(priceFeed, ethValue)
-        let otherLoan = await createLoanWithAllocation(otherPriceFeed, 123456)
+        priceTime = await helpers.advanceOneDay()
+        await helpers.reportDelayedPrice(users, priceFeed, ethPrice, pegPrice, priceTime)
+        await helpers.reportDelayedPrice(users, otherPriceFeed, ethPrice, pegPrice, priceTime)
 
-        let priceFeedStruct = await getPriceFeedStruct(priceFeed.address);
-        assert.equal(priceFeedStruct.finalizedStateIndex, -1)
-        assert.equal(priceFeedStruct.initializedStateIndex, -1)
-        let [finalizedFeedState, initializedFeedState] = await getPriceFeedStates(priceFeed.address)
-        assert.equal(finalizedFeedState, undefined)
-        assert.equal(initializedFeedState, undefined)
-
-        let priceTime, callTime;
-        [priceTime, callTime] = await advanceOneDay()
-        await postPrice(priceFeed, 200.0, 1.0, priceTime, callTime)
-        await postPrice(otherPriceFeed, 200.0, 1.0, priceTime, callTime)
-
-        priceFeedStruct = await getPriceFeedStruct(priceFeed.address);
-        let otherPriceFeedStruct = await getPriceFeedStruct(otherPriceFeed.address, true);
-        assert.equal(priceFeedStruct.finalizedStateIndex, -1)
-        assert.notEqual(priceFeedStruct.initializedStateIndex, -1);
-        assert.isTrue(priceFeedStruct.initializedStateIndex > otherPriceFeedStruct.initializedStateIndex);
-        ([finalizedFeedState, initializedFeedState] = await getPriceFeedStates(priceFeed.address));
-        let [finalizedFeedStateFromMap, initializedFeedStateFromMap] = await getPriceFeedStatesFromMap(priceFeed.address);
-        assert.equal(undefined, finalizedFeedStateFromMap)
-        assert.equal(priceFeed.address, initializedFeedStateFromMap.priceFeedAddress);
-
-        ([priceTime, callTime] = await advanceOneDay());
-        let additionalEthValue = 200000;
-        loan.depositEth({value: additionalEthValue, from: loanOwner})
-        await postPrice(priceFeed, 200.0, 1.0, priceTime, callTime)
-        await postPrice(otherPriceFeed, 200.0, 1.0, priceTime, callTime)
-
-        priceFeedStruct = await getPriceFeedStruct(priceFeed.address);
-        otherPriceFeedStruct = await getPriceFeedStruct(otherPriceFeed.address, true);
-        assert.notEqual(priceFeedStruct.finalizedStateIndex, -1)
-        assert.notEqual(priceFeedStruct.initializedStateIndex, -1);
-        assert.isTrue(priceFeedStruct.initializedStateIndex < otherPriceFeedStruct.initializedStateIndex);
-        ([finalizedFeedState, initializedFeedState] = await getPriceFeedStates(priceFeed.address));
-        ([finalizedFeedStateFromMap, initializedFeedStateFromMap] = await getPriceFeedStatesFromMap(priceFeed.address));
-        assert.equal(priceFeed.address, finalizedFeedStateFromMap.priceFeedAddress)
-        assert.equal(priceFeed.address, initializedFeedStateFromMap.priceFeedAddress);
-
-        ([priceTime, callTime] = await advanceOneDay());
-        loan.withdrawEth(loanOwner, additionalEthValue, {from: loanOwner});
-        await postPrice(priceFeed, 200.0, 1.0, priceTime, callTime)
-        await postPrice(otherPriceFeed, 200.0, 1.0, priceTime, callTime);
-
-        priceFeedStruct = await getPriceFeedStruct(priceFeed.address);
-        otherPriceFeedStruct = await getPriceFeedStruct(otherPriceFeed.address, true);
-        ([finalizedFeedState, initializedFeedState] = await getPriceFeedStates(priceFeed.address));
-        assert.isTrue(priceFeedStruct.initializedStateIndex > otherPriceFeedStruct.initializedStateIndex);
-    });
-
-    async function createLoanWithAllocation(priceFeed, ethDeposit)
-    {
-        const allocation = getAllocation(priceFeed.address.toString(), 100)
-        allocations = getAllocations(allocation)
-        await systemLoans.createLoan({from: loanOwner})
-        const newLoanAddress = await systemLoans.lastNewAddress.call()                
-        const newLoan = await Loan.at(newLoanAddress)
-        await newLoan.allocatePriceFeeds(allocations, {from: loanOwner});  
-        await newLoan.depositEth({value: ethDeposit, from: loanOwner});
-        return newLoan;
-    }
-
-    async function getFinalizedStateArray(skipLog)
-    {
-        let finalizedDay = await systemFeeds.finalizedDay.call()
-        let FinalizedListIndex = (parseInt(finalizedDay) % 2)
-        if (skipLog != true) {console.log(">finalizedStateList - listIndex: " + FinalizedListIndex + ", finalizedDay: " + finalizedDay)}
-        return await getStateArray(FinalizedListIndex, skipLog)
-    }
-
-    async function getInitializedStateArray(skipLog)
-    {
-        let finalizedDay = await systemFeeds.finalizedDay.call()
-        let initializedListIndex = ((parseInt(finalizedDay) + 1) % 2)
-        if (skipLog != true) {console.log(">initializedStateList - listIndex = " + initializedListIndex + ", finalizedDay: " + finalizedDay)}
-        return await getStateArray(initializedListIndex, skipLog)
-    }
-
-    function getPriceFeedState(stateArray, priceFeedAddress)
-    {
-        for (let i = 0; i < 25; i++)
-        {     
-            if(stateArray[i].priceFeedAddress == priceFeedAddress) {
-                return stateArray[i]
-            }
-        }
-        return undefined;
-    }
-
-    async function getStateArray(listIndex, skipLog)
-    {
-        let stateList = [];
-        for (let i = 0; i < 25; i++)
-        {        
-            let feedState = await systemFeeds.priceFeedStateLists.call(i, listIndex)
-            if(i < 5 && skipLog != true) {console.log(`[${i}] totalAllocation: ${feedState.totalAllocation.toString()}, isFinalized: ${feedState.isFinalized}, priceFeedAddress: ${feedState.priceFeedAddress}`)}
-            stateList[i] = feedState
-        }
-        return stateList
-    }
-
-    async function getPriceFeedStruct(priceFeedAddress, skipLog)
-    {
-        let priceFeedStruct = await systemFeeds.priceFeedMap.call(priceFeedAddress)
-        
-        let message = `totalAllocation: ${priceFeedStruct.totalAllocation.toString()}, finalizedStateIndex: ${priceFeedStruct.finalizedStateIndex.toString()}, `
-        message += `initializedStateIndex: ${priceFeedStruct.initializedStateIndex.toString()}, isPriceFeed: ${priceFeedStruct.isPriceFeed}, daysSkipped: ${priceFeedStruct.daysSkipped.toString()}`
-        if (skipLog != true) { console.log(message) }
- 
-        return priceFeedStruct;
-    }
+        priceFeedState = await helpers.getFeedState(contracts, priceFeed);
+        assert.equal(priceFeedState.finalizedStateIndex, 2 ** 32 - 1)
+        assert.equal(priceFeedState.processingStateIndex, 2 ** 32 - 1)
+   });
 }); 

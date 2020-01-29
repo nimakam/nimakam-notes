@@ -2,6 +2,7 @@ pragma solidity ^0.5.11;
 pragma experimental ABIEncoderV2;
 
 import "./System.sol";
+import "./PeggedToken.sol";
 import "./SystemSavings.sol";
 
 /// @author Nima Kamoosi
@@ -26,6 +27,7 @@ contract SavingsAccount {
         address _peggedTokenAddress
     ) public {
         owner = _owner;
+        systemSavings = SystemSavings(msg.sender);
         peggedToken = PeggedToken(_peggedTokenAddress);
     }
 
@@ -48,11 +50,12 @@ contract SavingsAccount {
 
     function registerCurrencySkipInterest(uint256 _registerValue) public {
         require(owner == msg.sender, "sender should be owner");
+        setCallTime();
 
         uint256 currentBalance = peggedToken.balanceOf(address(this));
-        require(registeredBalance + _registerValue <= currentBalance, "registered balance should not exceed balance");
+        require(registeredBalance + _registerValue <= currentBalance, "resulting registered balance should not exceed balance");
 
-        emit ConsoleLog(">registerCurrencySkipInterest _registerValue currentBalance");
+        emit ConsoleLog(">SavingsAccount.registerCurrencySkipInterest _registerValue currentBalance");
         emit ConsoleLog(uint2str(_registerValue));
         emit ConsoleLog(uint2str(currentBalance));
 
@@ -97,10 +100,11 @@ contract SavingsAccount {
         uint256 currentBalance = peggedToken.balanceOf(address(this));
         require(currentBalance >= registeredBalance, "registered balance cannot exceed balance");
 
-        emit ConsoleLog(">withdrawAllCurrencyWithInterest _withdrawToAddress currentBalance registeredBalance callTime lastInterestTime");
+        emit ConsoleLog(">SavingsAccount.withdrawAllCurrencyWithInterest _withdrawToAddress currentBalance registeredBalance");
         emit ConsoleLog(add2str(_withdrawToAddress));
         emit ConsoleLog(uint2str(currentBalance));
         emit ConsoleLog(uint2str(registeredBalance));
+        emit ConsoleLog(">SavingsAccount.withdrawAllCurrencyWithInterest callTime lastInterestTime");
         emit ConsoleLog(uint2str(callTime));
         emit ConsoleLog(uint2str(lastInterestTime));
 
@@ -116,17 +120,17 @@ contract SavingsAccount {
         peggedToken.transfer(_withdrawToAddress, updatedBalance);
     }
 
-    function voteDownPriceFeed(address _priceFeedAddress) public {
-        require(owner == msg.sender, "sender should be owner");
+    // function voteDownPriceFeed(address _priceFeedAddress) public {
+    //     require(owner == msg.sender, "sender should be owner");
 
-        emit ConsoleLog(">voteDownPriceFeed downVotedFeed _priceFeedAddress registeredBalance");
-        emit ConsoleLog(add2str(downVotedFeedAddress));
-        emit ConsoleLog(add2str(_priceFeedAddress));
-        emit ConsoleLog(uint2str(registeredBalance));
+    //     emit ConsoleLog(">voteDownPriceFeed downVotedFeed _priceFeedAddress registeredBalance");
+    //     emit ConsoleLog(add2str(downVotedFeedAddress));
+    //     emit ConsoleLog(add2str(_priceFeedAddress));
+    //     emit ConsoleLog(uint2str(registeredBalance));
 
-        systemSavings.voteDownPriceFeed(downVotedFeedAddress, _priceFeedAddress, registeredBalance);
-        downVotedFeedAddress = _priceFeedAddress;
-    }
+    //     systemSavings.voteDownPriceFeed(downVotedFeedAddress, _priceFeedAddress, registeredBalance);
+    //     downVotedFeedAddress = _priceFeedAddress;
+    // }
 
     uint256 public callTime;
     function setCallTime() private {

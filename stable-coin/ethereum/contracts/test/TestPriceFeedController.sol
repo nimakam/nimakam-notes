@@ -19,16 +19,16 @@ contract TestPriceFeedController {
         priceFeed = PriceFeed(priceFeedAddress);
     }
 
-    function postHistoricalPrice(PriceFeed.HistoricalPrice memory _historicalPrice) public {
+    function reportDelayedPrices(PriceFeed .DelayedPrice memory _historicalPrice) public {
         require(owner == msg.sender, "sender should be owner");
 
-        priceFeed.postHistoricalPrice(_historicalPrice);
+        priceFeed.reportDelayedPrices(_historicalPrice);
     }
 
-    function postInstantPrice(PriceFeed.InstantPrice memory _instantPrice) public {
+    function reportInstantPrice(uint256 ethPrice) public {
         require(owner == msg.sender, "sender should be owner");
 
-        priceFeed.postInstantPrice(_instantPrice);
+        priceFeed.reportInstantPrice(ethPrice);
     }
 
 }

@@ -1,125 +1,107 @@
-const PeggedToken = artifacts.require("PeggedToken");
-const System = artifacts.require("System");
-const SystemFeeds = artifacts.require("SystemFeeds");
-const SystemLoans = artifacts.require("SystemLoans");
-const PriceFeed = artifacts.require("PriceFeed");
-const Loan = artifacts.require("Loan");
-const TOKEN_DECIMALS = 18;
-const RATE_DECIMALS = 6;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
 contract('Loan.Negative', accounts => {
-    const systemCreator = accounts[0];
-    const moneyUser = accounts[1];    
-    const loanOwner = accounts[2];
-    const priceFeedOwner = accounts[3];
-    const someTestUser = accounts[9];
+    let helpers = require("./helpers.js");
     let catchRevert = require("./exceptions.js").catchRevert;
-    let system, systemFeeds;
-    let defaultAllocations;
+    let defaultPriceFeed;
 
     before(async function () {
-        system = await System.deployed()
-        systemFeeds = await SystemFeeds.deployed()
-        systemLoans = await SystemLoans.deployed()
+        contracts = await helpers.ensureContractsDeployed();
+        users = helpers.getUsers(accounts);
 
-        await systemFeeds.createPriceFeed({from: priceFeedOwner})
-        const defaultPriceFeedAddress = await systemFeeds.lastNewAddress.call()   
-        const defaultPriceFeed = await PriceFeed.at(defaultPriceFeedAddress)
-        let timestamp = await latestTimestamp()
-        const instantPrice = { medianEthRate : 200 * 10 ** 10, priceTime : timestamp , callTime: timestamp }
+        let ethPrice = 200.0;
+        let pegPrice = 1.0;
+        let ethDeposit = 1.23456;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        
+        defaultPriceFeed = await helpers.windDownAndBootstrapSystem(contracts, users, ethDeposit, currencyIssuance, ethPrice, pegPrice);
 
-        await defaultPriceFeed.postInstantPrice(instantPrice, {from: priceFeedOwner})      
-
-        const defaultAllocation = getAllocation(defaultPriceFeed.address.toString(), 100)
-        defaultAllocations = getAllocations(defaultAllocation)
+        secondPriceFeed = await helpers.createPriceFeed(contracts, users);
+        multiAllocations = helpers.getFeedAllocations(defaultPriceFeed, secondPriceFeed)
     });
 
-    const emptyAllocation = {priceFeedAddress: ZERO_ADDRESS, percentAllocation: 0, isAllocation: false };
-    function getAllocation(address, allocation, isAllocation = true) { return {priceFeedAddress: address, percentAllocation: allocation, isAllocation: isAllocation } }
-    function getAllocations(allocation1 , allocation2 = emptyAllocation, allocation3 = emptyAllocation, allocation4 = emptyAllocation, allocation5 = emptyAllocation) { return [allocation1, allocation2, allocation3, allocation4, allocation5] }
-
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
     it('is not usable if not created through system', async () => {       
         // Create a loan contract incorrectly in the following ways:
         // 1. Call made directly by user - NOT the system contract 
         // 2. Address passed is not the owner user/contract, it is ZERO_ADDRESS          
-        const newLoan = await Loan.new(accounts[5], accounts[6], accounts[7], {from: accounts[8]})
+        const newLoan = await helpers.Loan.new(users.loanOwner, accounts[6], accounts[7], {from: accounts[8]})
         const newLoanOwner = await newLoan.owner.call()
         const newLoan_System = await newLoan.system.call()
         const newLoan_SystemLoans = await newLoan.systemLoans.call()
         const newLoan_PeggedToken = await newLoan.peggedToken.call()
-        assert.equal(accounts[5], newLoanOwner)
+        assert.equal(users.loanOwner, newLoanOwner)
         assert.equal(accounts[6], newLoan_System)
         assert.equal(accounts[7], newLoan_PeggedToken)
         assert.equal(accounts[8], newLoan_SystemLoans)
 
         // Expecting any calls made onto the contract to revert
-        await catchRevert(newLoan.depositEth({value: 10 ** 5, from: someTestUser}));
-        await catchRevert(newLoan.issueCurrency(10 ** 7, {from: someTestUser}));
+        await catchRevert(newLoan.depositEth({value: helpers.toOnChainString(1.0), from: users.someTestUser}));
+        await catchRevert(newLoan.issueCurrency(helpers.toOnChainString(100.0), {from: users.someTestUser}));
     });
 
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
     it('cannot be used by users other than owner', async () => {
-        const newLoan = await createLoan()
+        const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)
         
-        await catchRevert(newLoan.depositEth({value: 10 ** 5, from: someTestUser}));
-        await catchRevert(newLoan.issueCurrency(10 ** 7, {from: someTestUser}));
+        await catchRevert(newLoan.depositEth({value: helpers.toOnChainString(1.0), from: users.someTestUser}));
+        await catchRevert(newLoan.issueCurrency(helpers.toOnChainString(100.0), {from: users.someTestUser}));
     });
 
-    async function createLoan()
-    {
-        await systemLoans.createLoan({from: loanOwner})
-        const newLoanAddress = await systemLoans.lastNewAddress.call()                
-        const newLoan = await Loan.at(newLoanAddress)
-        return newLoan;
-    }
-
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
     it('cannot be deposited into without price feed allocation', async () => {
-        const newLoan = await createLoan()
+        await contracts.systemLoans.createLoan({from: users.loanOwner})
+        const newLoanAddress = await contracts.systemLoans.lastNewAddress.call()                
+        const newLoan = await helpers.Loan.at(newLoanAddress)
         
-        await catchRevert(newLoan.depositEth({value: 10 ** 5, from: loanOwner}));
+        await catchRevert(newLoan.depositEth({value: helpers.toOnChainString(1.0), from: users.loanOwner}));
 
         const loanEthBalance = await web3.eth.getBalance(newLoan.address)
         assert.equal(0, loanEthBalance.toString())
     });
 
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
     it('cannot issue more currency than allowed by threshold', async () => {
-        const newLoan = await createLoan()
-        await newLoan.allocatePriceFeeds(defaultAllocations, {from: loanOwner});   
-        await newLoan.depositEth({value: 10 ** 5, from: loanOwner});
+        const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)
 
-        await catchRevert(newLoan.issueCurrency(10 ** 8,  {from: loanOwner}));
+        await newLoan.depositEth({value: helpers.toOnChainString(1.0), from: users.loanOwner});
+
+        await catchRevert(newLoan.issueCurrency(helpers.toOnChainString(1000.0),  {from: users.loanOwner}));
+        await catchRevert(newLoan.issueCurrency(helpers.toOnChainString(134.0),  {from: users.loanOwner}));
     });
 
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
     it('cannot transfer more than issued currency', async () => {
-        const newLoan = await createLoan()
-        await newLoan.allocatePriceFeeds(defaultAllocations, {from: loanOwner});   
-        await newLoan.depositEth({value: 10 ** 5, from: loanOwner});
-        newLoan.issueCurrency(10 ** 7,  {from: loanOwner});
+         const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)
 
-        await catchRevert(newLoan.withdrawCurrency(moneyUser, 1.1 * 10 ** 7,  {from: loanOwner}));
+        await newLoan.depositEth({value: helpers.toOnChainString(1.0), from: users.loanOwner});
+        await newLoan.issueCurrency(helpers.toOnChainString(100.0),  {from: users.loanOwner});
+
+        await catchRevert(newLoan.withdrawCurrency(users.moneyUser, helpers.toOnChainString(100.1),  {from: users.loanOwner}));
     });
 
-    it('cannot reverse issue more than issued currency', async () => {
-        const newLoan = await createLoan()        
-        await newLoan.allocatePriceFeeds(defaultAllocations, {from: loanOwner});   
-        await newLoan.depositEth({value: 10 ** 5, from: loanOwner});
-        newLoan.issueCurrency(10 ** 7,  {from: loanOwner});
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
+    it('cannot return more than issued currency', async () => {
+        const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)        
+        const otherLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)        
+        
+        await otherLoan.depositEth({value: helpers.toOnChainString(0.1), from: users.loanOwner});
+        await otherLoan.issueCurrency(helpers.toOnChainString(10.0),  {from: users.loanOwner});
+        await otherLoan.withdrawCurrency(users.moneyUser, helpers.toOnChainString(10.0),  {from: users.loanOwner});
+      
+        await newLoan.depositEth({value: helpers.toOnChainString(1.0), from: users.loanOwner});
+        await newLoan.issueCurrency(helpers.toOnChainString(100.0),  {from: users.loanOwner});
+        await contracts.peggedToken.transfer(newLoan.address, helpers.toOnChainString(1.0), {from: users.moneyUser})
 
-        await catchRevert(newLoan.returnCurrency(1.1 * 10 ** 7,  {from: loanOwner}));
+        await catchRevert(newLoan.returnCurrency(helpers.toOnChainString(101.0),  {from: users.loanOwner}));
     });
 
+    // See [Loan negative scenarios](./scenarios.md#loan-negative-scenarios)
     it('cannot withdraw more ETH than allowed by threshold', async () => {
-        const newLoan = await createLoan()        
-        await newLoan.allocatePriceFeeds(defaultAllocations, {from: loanOwner});   
-        await newLoan.depositEth({value: 10 ** 5, from: loanOwner});
-        newLoan.issueCurrency(10 ** 7,  {from: loanOwner});
+        const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)        
 
-        await catchRevert(newLoan.withdrawEth(loanOwner, 10 ** 5, {from: loanOwner}));
+        await newLoan.depositEth({value: helpers.toOnChainString(1.5), from: users.loanOwner});
+        await newLoan.issueCurrency(helpers.toOnChainString(200.0),  {from: users.loanOwner});
+
+        await catchRevert(newLoan.withdrawEth(users.loanOwner, helpers.toOnChainString(0.1), {from: users.loanOwner}));
+        await catchRevert(newLoan.withdrawEth(users.loanOwner, helpers.toOnChainString(10.0), {from: users.loanOwner}));
     });
-
-    async function latestTimestamp()
-    {
-        const latestBlock = await web3.eth.getBlock('latest');
-        return parseInt(latestBlock.timestamp);
-    }
 }); 

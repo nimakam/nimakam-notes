@@ -1,286 +1,383 @@
 pragma solidity ^0.5.11;
 pragma experimental ABIEncoderV2;
 
+import "./PeggedToken.sol";
 import "./System.sol";
 import "./PriceFeed.sol";
+import "./Loan.sol";
 
 contract SystemFeeds {
 
-    //address public systemAddress;
     System public system;
+    PeggedToken public peggedToken;
     address public systemLoansAddress;
     uint256 public firstTime;
 
     constructor(
+        address _peggedTokenAddress,
         address _systemAddress
     ) public {
+        require(address(system) == address(0), "system address should be 0");
         require(_systemAddress != address(0), "_systemAddress should not be 0");
+        require(address(peggedToken) == address(0), "peggedToken address should be 0");
+        require(_peggedTokenAddress != address(0), "_peggedTokenAddress should not be 0");
         system = System(_systemAddress);
+        peggedToken = PeggedToken(_peggedTokenAddress);
         firstTime = system.firstTime();
     }
 
     function initialize(address _systemLoansAddress) public {
         require(systemLoansAddress == address(0), "systemLoansAddress should be 0");
+        require(_systemLoansAddress != address(0), "_systemLoansAddress should not be 0");
         systemLoansAddress = _systemLoansAddress;
     }
 
-    uint32 constant SECONDS_PER_DAY = 86400; // SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY = 60 * 60 * 24
-    uint32 constant DAYS_PER_WEEK = 7;
-    uint32 constant WEEKS_PER_PERIOD = 5; // 35 days = ~1 month
-    uint32 constant PERIODS_PER_PERIOD2S = 5; // 175 days = ~0.48 years
-    uint32 constant PERIOD2S_PER_PERIOD3S = 5; // 875 days = ~2.4 years
-    uint32 constant PERIOD3S_PER_PERIOD4S = 5; // 4378 days = ~12 years
-    uint32 constant PERIOD4S_PER_PERIOD5S = 5; // 21875 days = ~60 years
-
-    uint256 public callTime;
-    function setCallTime() private {
-        callTime = block.timestamp;
-    }
-
     address public lastNewAddress;
-
     function createPriceFeed() public returns(address newPriceFeedAddress) {
-        emit ConsoleLog(">SystemFeeds.createPriceFeed");
-
         PriceFeed newPriceFeed = new PriceFeed(msg.sender, address(system));
         newPriceFeedAddress = address(newPriceFeed);
         priceFeedMap[newPriceFeedAddress].isPriceFeed = true;
-        priceFeedMap[newPriceFeedAddress].finalizedStateIndex = -1;
-        priceFeedMap[newPriceFeedAddress].initializedStateIndex = -1;
+        priceFeedMap[newPriceFeedAddress].finalizedStateIndex = MAX_UINT32;
+        priceFeedMap[newPriceFeedAddress].processingStateIndex = MAX_UINT32;
         lastNewAddress = newPriceFeedAddress;
         return newPriceFeedAddress;
-    }
-
-    mapping (address => PriceFeedStruct) public priceFeedMap;
-    struct PriceFeedStruct {
-        bool isPriceFeed;
-        uint256 totalAllocation;
-        uint256 totalDownVote;
-        int32 finalizedStateIndex;
-        int32 initializedStateIndex;
-        uint8 daysSkipped;
-    }
-
-    uint32 public finalizedDay;
-
-    function postHistoricalPrice(PriceFeed.HistoricalPrice memory historicalPrice) public {
-        emit ConsoleLog(">SystemFeeds.postHistoricalPrice");
-        require(priceFeedMap[msg.sender].isPriceFeed, "sender should be valid price feed contract");
-        setCallTime();
-
-        processHistoricalPrice(historicalPrice);
-    }
-
-    uint256 constant public PRICE_RATE_DECIMALS = 10;
-    uint32 constant public HIGH_TRUST_FEED_COUNT = 5; // Maximum number of high trust price feeds
-    uint32 constant public MEDIUM_TRUST_FEED_COUNT = 25; // Maximum number of medium trust price feeds
-    uint32 constant public FEED_LISTS_COUNT = 2; //
-    PriceFeedState[FEED_LISTS_COUNT][MEDIUM_TRUST_FEED_COUNT] public priceFeedStateLists;
-    struct PriceFeedState {
-        address priceFeedAddress;
-        uint256 totalAllocation;
-        bool isFinalized;
-    }
-
-   //function processHistoricalPrice(HistoricalPrice memory historicalPrice) private {
-   function processHistoricalPrice(PriceFeed.HistoricalPrice memory historicalPrice) private {
-        // uint32 callDay = uint32((callTime - firstTime) / SECONDS_PER_DAY);
-        // require(callDay = priceDay + 1, "price day is a day before call day")
-        uint32 priceDay = uint32((historicalPrice.priceTime - firstTime) / SECONDS_PER_DAY);
-        require(finalizedDay < priceDay, "price day occurs on or before last finalized day");
-
-        uint32 j = uint32(priceDay % 2); // initializedListIndex
-
-//if(flippedState % 2 == 0) {
-emit ConsoleLog(">SystemFeeds.processHistoricalPrice");
-
-
-        if (finalizedDay + 1 < priceDay) // Decide if we need to finalize the last initialized day and initialize another
-        {
-emit ConsoleLog("finalizedDay + 1 < priceDay");
-
-            // 1. Finalize last initialized day (commonly 2 days ago or before = 1 day before price day or before)
-            uint32 finalizeListIndex = uint32((finalizedDay + 1) % 2); //Finalized list index
-            //  1.a. Ensure last finalized feed state list is duplicated, is ready for nextinitialization
-            for (uint32 i = 0; i < MEDIUM_TRUST_FEED_COUNT; i++) {
-                if(priceFeedStateLists[i][j].priceFeedAddress != address(0)) {
-                    if(!priceFeedStateLists[i][j].isFinalized) {
-                        priceFeedMap[priceFeedStateLists[i][j].priceFeedAddress].daysSkipped++;
-                        priceFeedStateLists[i][j].isFinalized = true;
-                        // ToDo - Issue a penalty for skipping a single days - consider giving some of the slashing to calling feed's pool for gas cost
-                        // ToDo - After 2 days of skipping, flag and remove from list for 7 days, all proceeds go to savings pool
-                    }
-                }
-                priceFeedStateLists[i][(finalizeListIndex + 1) % 2] = priceFeedStateLists[i][finalizeListIndex]; // Copy old finalized entry to current finalized entry
-                if(priceFeedStateLists[i][finalizeListIndex].priceFeedAddress != address(0)) {
-                    priceFeedMap[priceFeedStateLists[i][finalizeListIndex].priceFeedAddress].finalizedStateIndex = int32(i);
-                }
-            }
-
-            finalizedDay = priceDay - 1;
-
-            // 2. ToDo - [Rare] Finalize empty (non-initialized) gap days if appropriate - Can I skip this?
-            //  2.a. Do not modify state array
-
-            // 3. Initialize current price day (1 day ago)
-            //  3.a. Reset indexes and use the copied state array, to start initializing
-            for (uint32 i = 0; i < MEDIUM_TRUST_FEED_COUNT; i++) {
-                if(priceFeedStateLists[i][j].priceFeedAddress != address(0)) {
-                    priceFeedStateLists[i][j].isFinalized = false;
-                }
-            }
-        }
-
-//}
-//if(flippedState % 2 == 0) {
-
-        // Continue processing yesterday's price feed states based on current historical price report
-        priceFeedMap[msg.sender].daysSkipped = 0; // Processing now so cumulative days skipped is 0
-        if(priceFeedMap[msg.sender].totalAllocation != 0) { // Skip if the current feed has no allocation
-            uint32 startIndex;
-            if(priceFeedMap[msg.sender].initializedStateIndex == -1) { // If feed state is not in the list start from the bottom
-                startIndex = uint32(MEDIUM_TRUST_FEED_COUNT); // the price feed state does not fit on the array
-                for (int32 i = int32(MEDIUM_TRUST_FEED_COUNT - 1); i >= 0; i--) { // Iterate through initialized feed states starting from calling feed's posistion or the bottom
-                    if(priceFeedStateLists[uint32(i)][j].priceFeedAddress == address(0)) { // Skip if current state index is not empty
-                        if(i == 0 || priceFeedStateLists[uint32(i)-1][j].priceFeedAddress != address(0)) { // If reacehd first non-empty state or at top of empty list, set calling price feed state
-                            priceFeedStateLists[uint32(i)][j].priceFeedAddress = msg.sender;
-                            priceFeedStateLists[uint32(i)][j].totalAllocation = priceFeedMap[msg.sender].totalAllocation;
-                            priceFeedMap[msg.sender].initializedStateIndex = int32(i);
-                            priceFeedStateLists[uint32(i)][j].isFinalized = true;
-                            startIndex = uint32(i);
-                        }
-                    }
-                }
-            } else { // If feed state is already in the list, start there
-                startIndex = uint32(priceFeedMap[msg.sender].initializedStateIndex);
-                require(priceFeedStateLists[startIndex][j].isFinalized == false, "cannot report the same price twice in a day");
-                priceFeedStateLists[startIndex][j].isFinalized = true;
-                priceFeedStateLists[startIndex][j].totalAllocation = priceFeedMap[msg.sender].totalAllocation;
-            }
-
-            for (int32 i = int32(startIndex); i >= 0; i--) { // Iterate through initialized feed states starting from calling feed's posistion or the bottom
-                if(priceFeedStateLists[uint32(i)][j].priceFeedAddress == address(0)) { // Skip if current state index is not empty
-                    if(i == 0 || priceFeedStateLists[uint32(i)-1][j].priceFeedAddress != address(0)) { // If reacehd first non-empty state or at top of empty list, set calling price feed state
-                        priceFeedStateLists[uint32(i)][j].priceFeedAddress = msg.sender;
-                        priceFeedStateLists[uint32(i)][j].totalAllocation = priceFeedMap[msg.sender].totalAllocation;
-                        priceFeedMap[msg.sender].initializedStateIndex = int32(i);
-                        priceFeedStateLists[uint32(i)][j].isFinalized = true;
-                    }
-                }
-
-                if(i > 0 && priceFeedStateLists[uint32(i)][j].priceFeedAddress == msg.sender) { // Skip if calling feed state failed to advance to this point, or if we reached top of list
-                    if(priceFeedMap[msg.sender].totalAllocation > priceFeedMap[priceFeedStateLists[uint32(i)-1][j].priceFeedAddress].totalAllocation) { // Skip bubbling feed state up if total allocation is not greater than next entry
-                        swapFeedStates(j, uint32(i));
-                    }
-                }
-            }
-        }
-    }
-
-    function swapFeedStates(uint32 listIndex, uint32 index) private {
-        emit ConsoleLog(">swapFeedStates listIndex index");
-        emit ConsoleLog(uint2str(uint256(listIndex)));
-        emit ConsoleLog(uint2str(uint256(index)));
-        require(priceFeedStateLists[index][listIndex].priceFeedAddress != address(0), "swapped feed state i cannot be empty");
-        require(priceFeedStateLists[index-1][listIndex].priceFeedAddress != address(0), "swapped feed state i-1 cannot be empty");
-
-        // Swap feed state structs
-        PriceFeedState memory currentFeedState = priceFeedStateLists[index][listIndex];
-        priceFeedStateLists[index][listIndex] = priceFeedStateLists[index - 1][listIndex];
-        priceFeedStateLists[index - 1][listIndex] = currentFeedState;
-
-        // Update price feed map initialized index
-        priceFeedMap[priceFeedStateLists[index][listIndex].priceFeedAddress].initializedStateIndex = int32(index);
-        priceFeedMap[priceFeedStateLists[index - 1][listIndex].priceFeedAddress].initializedStateIndex = int32(index - 1);
     }
 
     function isPriceFeed(address _priceFeedAddress) public returns (bool) {
         return priceFeedMap[_priceFeedAddress].isPriceFeed;
     }
 
-    function incrementPriceFeedAllocation(address _priceFeedAddress, uint256 _value) public {
-        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
-        require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
-        priceFeedMap[_priceFeedAddress].totalAllocation += _value;
+    mapping (address => PriceFeedState) public priceFeedMap;
+    struct PriceFeedState {
+        bool isPriceFeed;
+        bool isBanned;
+        uint32 finalizedStateIndex;
+        uint32 processingStateIndex;
+        uint32 lastPriceDay;
+        uint32 lastPenaltyDay;
+        uint256 totalAllocation;
+        //uint256 totalDownVote;
+        uint256 revenuePoolBalance;
+        uint256 lastEthPrice;
+        //uint256 lastPegPrice;
+        //uint256 lastPriceTime;
     }
 
-    function decrementPriceFeedAllocation(address _priceFeedAddress, uint256 _value) public {
-        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
-        require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
-        priceFeedMap[_priceFeedAddress].totalAllocation -= _value;
+    uint32 public finalizedDay = MAX_UINT32;
+    uint32 constant MAX_UINT32 = uint32(2 ** 32 - 1);
+
+    function reportInstantPrice(PriceFeed.InstantPrice memory _instantPrice) public {
+        require(priceFeedMap[msg.sender].isPriceFeed, "caller address should be a valid price feed");
+        require(priceFeedMap[msg.sender].finalizedStateIndex != MAX_UINT32, "caller feed should be in finalized medium trust list");
+
+        system.reportInstantPrice(msg.sender, _instantPrice);
     }
 
-    function incrementDownVote(address _priceFeedAddress, uint256 _value) public {
-        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
-        require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
-        priceFeedMap[_priceFeedAddress].totalDownVote += _value;
+    function reportDelayedPrices(PriceFeed.DelayedPrice memory delayedPrice) public {
+        require(priceFeedMap[msg.sender].isPriceFeed, "caller address sholuld be a valid price feed");
+
+        priceFeedMap[msg.sender].lastEthPrice = delayedPrice.ethPrice;
+        //priceFeedMap[msg.sender].lastPegPrice = delayedPrice.pegPrice;
+        //priceFeedMap[msg.sender].lastPriceTime = delayedPrice.priceTime;
+
+        processDelayedPrice(delayedPrice);
     }
 
-    function decrementDownVote(address _priceFeedAddress, uint256 _value) public {
-        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
-        require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
-        priceFeedMap[_priceFeedAddress].totalDownVote -= _value;
+    uint32 constant SECONDS_PER_DAY = 86400; // SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY = 60 * 60 * 24
+    uint32 constant public HIGH_TRUST_FEEDS = 5; // Maximum number of high trust price feeds
+    uint32 constant public MEDIUM_TRUST_FEEDS = 25; // Maximum number of medium trust price feeds
+    uint32 constant public PROCESS_LISTS = 2;
+    FeedProcessState[MEDIUM_TRUST_FEEDS] public feedProcessingStateList;
+    struct FeedProcessState {
+        address priceFeedAddress;
+        uint256 rankingMetric;
+        uint256 totalAllocation;
+        uint256 ethPrice;
+        uint256 pegPrice;
+        bool isProcessed;
     }
 
-    function getInstantRate() public returns (uint256) {
-        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
-        return priceFeed_latestInstantPrice.medianEthRate;
-    }
+    function tryFinalizeDelayedPrices() private {
+        //uint32 priceDay = uint32((block.timestamp - firstTime) / SECONDS_PER_DAY);
+        //require(finalizedDay == MAX_UINT32 || finalizedDay < priceDay, "price day occurs after last finalized day");
+        uint256 callTime = block.timestamp;
+        uint32 priceDay = uint32((callTime - firstTime) / SECONDS_PER_DAY) - 1;
 
-    PriceFeed.InstantPrice[HIGH_TRUST_FEED_COUNT] public priceFeed_latestInstantPrices;
-    PriceFeed.InstantPrice public priceFeed_latestInstantPrice;
+       // Decide if we need to finalize the last day we were processing
+        if (finalizedDay + 1 < priceDay || (finalizedDay == MAX_UINT32 && 0 < priceDay)) {
+            // 1. Finalize last processing/processed day (commonly 1 day before price day = 2 days ago)
+            uint32 i = 0;
+            while (i < MEDIUM_TRUST_FEEDS) {
+                bool isBannedAndReplaced = false;
+                FeedProcessState storage processFinalizedState = feedProcessingStateList[i];
+                PriceFeedState storage finalizedFeedState = priceFeedMap[processFinalizedState.priceFeedAddress];
+                if(processFinalizedState.priceFeedAddress != address(0)) {
+                    if(priceDay - 1 > finalizedFeedState.lastPriceDay) {
+                        enforceMissedReportPenalty(priceDay - 1, finalizedFeedState);
+                        if(priceDay > 7 + finalizedFeedState.lastPriceDay) {
+                            // ToDo - Penalize - all proceeds go to savings pool
+                            isBannedAndReplaced = true; // Set flag so we reiterate from same index after replacement
+                            finalizedFeedState.isBanned = true;
+                            delete feedProcessingStateList[i];
+                            for(uint32 n = i; n < MEDIUM_TRUST_FEEDS - 1; n++) {
+                                if (feedProcessingStateList[n + 1].priceFeedAddress != address(0)) {
+                                    swapFeedStates(n);
+                                }
+                            }
+                            finalizedFeedState.finalizedStateIndex = MAX_UINT32;
+                            finalizedFeedState.processingStateIndex = MAX_UINT32;
+                        }
+                    }
+                }
 
-    function postInstantPrice(PriceFeed.InstantPrice memory _instantPrice) public {
-        require(priceFeedMap[msg.sender].isPriceFeed, "sender should be valid price feed contract");
-        priceFeed_latestInstantPrice = _instantPrice;
-    }
+                if(!isBannedAndReplaced) { // If banned and replaced, reiterate on the same index, since it has been swapped by next entry
+                    if(processFinalizedState.priceFeedAddress != address(0)) {
+                        finalizedFeedState.finalizedStateIndex = i;
+                    }
+                    i++;
+                }
+            }
 
-    /// @dev Used for debugging
-    uint public flippedState;
-    function flipState() public {
-        emit ConsoleLog(">SystemFeeds.flipState");
-        flippedState++;
-        // if(flippedState % 2 == 0) {
-    }
+            finalizedDay = priceDay - 1;
+            // 2. Send finalized price feed state to monetary system. ToDo - [Rare] Finalize empty (non-initialized) gap days if appropriate - Can I skip this?
+            system.finalizePriceFeedState(finalizedDay, feedProcessingStateList);
 
-    /// @dev Used for debugging
-    function add2str(address x) public pure returns (string memory str) {
-        bytes memory s = new bytes(40);
-        for (uint i = 0; i < 20; i++) {
-            byte b = byte(uint8(uint(x) / (2**(8*(19 - i)))));
-            byte hi = byte(uint8(b) / 16);
-            byte lo = byte(uint8(b) - 16 * uint8(hi));
-            s[2*i] = char(hi);
-            s[2*i+1] = char(lo);
+
+            // 3. Initialize current price day (1 day ago)
+            for (uint32 i = 0; i < MEDIUM_TRUST_FEEDS; i++) {
+                if(feedProcessingStateList[i].priceFeedAddress != address(0)) {
+                    feedProcessingStateList[i].isProcessed = false;
+                }
+            }
         }
-        return string(s);
     }
 
-    /// @dev Used for debugging
-    function char(byte b) public pure returns (byte c) {
-        if (uint8(b) < 10) return byte(uint8(b) + 0x30);
-        else return byte(uint8(b) + 0x57);
-    }
+    function processDelayedPrice(PriceFeed.DelayedPrice memory delayedPrice) private {
+        PriceFeedState storage callingFeedState = priceFeedMap[msg.sender];
+        require(callingFeedState.isPriceFeed, "caller address sholuld be a valid price feed");
+        uint32 priceDay = uint32((delayedPrice.priceTime - firstTime) / SECONDS_PER_DAY);
+        require(finalizedDay == MAX_UINT32 || finalizedDay < priceDay, "price day occurs after last finalized day");
 
-    /// @dev Used for debugging
-    function uint2str(uint value) public pure returns (string memory str) {
-        uint i = value;
-        if (i == 0) return "0";
-        uint j = i;
-        uint len;
-        while (j != 0){
-            len++;
-            j /= 10;
+        tryFinalizeDelayedPrices();
+
+        // // Decide if we need to finalize the last day we were processing
+        // if (finalizedDay + 1 < priceDay || (finalizedDay == MAX_UINT32 && 0 < priceDay)) {
+        //     // 1. Finalize last processing/processed day (commonly 1 day before price day = 2 days ago)
+        //     uint32 i = 0;
+        //     while (i < MEDIUM_TRUST_FEEDS) {
+        //         bool isBannedAndReplaced = false;
+        //         FeedProcessState storage processFinalizedState = feedProcessingStateList[i];
+        //         PriceFeedState storage finalizedFeedState = priceFeedMap[processFinalizedState.priceFeedAddress];
+        //         if(processFinalizedState.priceFeedAddress != address(0)) {
+        //             if(priceDay - 1 > finalizedFeedState.lastPriceDay) {
+        //                 enforceMissedReportPenalty(priceDay - 1, finalizedFeedState);
+        //                 if(priceDay > 7 + finalizedFeedState.lastPriceDay) {
+        //                     // ToDo - Penalize - all proceeds go to savings pool
+        //                     isBannedAndReplaced = true; // Set flag so we reiterate from same index after replacement
+        //                     finalizedFeedState.isBanned = true;
+        //                     delete feedProcessingStateList[i];
+        //                     for(uint32 n = i; n < MEDIUM_TRUST_FEEDS - 1; n++) {
+        //                         if (feedProcessingStateList[n + 1].priceFeedAddress != address(0)) {
+        //                             swapFeedStates(n);
+        //                         }
+        //                     }
+        //                     finalizedFeedState.finalizedStateIndex = MAX_UINT32;
+        //                     finalizedFeedState.processingStateIndex = MAX_UINT32;
+        //                 }
+        //             }
+        //         }
+
+        //         if(!isBannedAndReplaced) { // If banned and replaced, reiterate on the same index, since it has been swapped by next entry
+        //             if(processFinalizedState.priceFeedAddress != address(0)) {
+        //                 finalizedFeedState.finalizedStateIndex = i;
+        //             }
+        //             i++;
+        //         }
+        //     }
+
+        //     finalizedDay = priceDay - 1;
+        //     // 2. Send finalized price feed state to monetary system. ToDo - [Rare] Finalize empty (non-initialized) gap days if appropriate - Can I skip this?
+        //     system.finalizePriceFeedState(finalizedDay, feedProcessingStateList);
+
+
+        //     // 3. Initialize current price day (1 day ago)
+        //     for (uint32 i = 0; i < MEDIUM_TRUST_FEEDS; i++) {
+        //         if(feedProcessingStateList[i].priceFeedAddress != address(0)) {
+        //             feedProcessingStateList[i].isProcessed = false;
+        //         }
+        //     }
+        // }
+
+        callingFeedState.lastPriceDay = priceDay; // Processing now so last posted on current price day
+
+        // Continue processing yesterday's price feed states based on current historical price report
+        if(callingFeedState.totalAllocation != 0 && !callingFeedState.isBanned) { // Skip if the current feed has no allocation
+            uint256 averageRevenueBalance = totalRegisteredRevenueBalances / MEDIUM_TRUST_FEEDS;
+            FeedProcessState memory feedProcessState; // Set up feed state to what it will be after it is initialized
+            feedProcessState.ethPrice = delayedPrice.ethPrice;
+            feedProcessState.pegPrice = delayedPrice.pegPrice;
+            feedProcessState.priceFeedAddress = msg.sender;
+            feedProcessState.rankingMetric = callingFeedState.totalAllocation * (callingFeedState.revenuePoolBalance + averageRevenueBalance);
+            feedProcessState.totalAllocation = callingFeedState.totalAllocation;
+            feedProcessState.isProcessed = true;
+
+            // Ensure current feed state is in the appropriate place on list
+            uint32 startIndex = uint32(MEDIUM_TRUST_FEEDS); // the price feed state does not fit on the array
+            if(callingFeedState.processingStateIndex == MAX_UINT32) { // If feed state is not in the list start from the bottom
+                uint32 i = MEDIUM_TRUST_FEEDS - 1;
+                while(i >= 0) {
+                    if(feedProcessingStateList[i].priceFeedAddress == address(0)) { // Skip if current state index is not empty
+                        if(i == 0 || feedProcessingStateList[i-1].priceFeedAddress != address(0)) { // If reacehd first non-empty state or at top of empty list, set calling price feed state
+                            callingFeedState.processingStateIndex = i;
+                            feedProcessingStateList[i] = feedProcessState;
+                            startIndex = i;
+                        }
+                    }
+                    if(i != 0) {i--;} else {break;}
+                }
+            } else {
+                // If feed state is already in the list, just start there
+                startIndex = uint32(callingFeedState.processingStateIndex);
+                require(feedProcessingStateList[startIndex].isProcessed == false, "cannot report the same price twice in a day");
+                feedProcessingStateList[startIndex] = feedProcessState;
+            }
+
+            if(startIndex != 0) {  // Skip if we are starting at top of list
+                // Bubble sort down any feed state that has less total allocation than current node
+                uint32 m = startIndex - 1;
+                while(m >= 0) {
+                    PriceFeedState storage m_priceFeedState = priceFeedMap[feedProcessingStateList[m].priceFeedAddress];
+                    if(feedProcessState.rankingMetric > m_priceFeedState.totalAllocation * (m_priceFeedState.revenuePoolBalance + averageRevenueBalance)) {
+                        for(uint32 n = m; n < startIndex - 1; n++) {
+                            PriceFeedState storage n_priceFeedState = priceFeedMap[feedProcessingStateList[n].priceFeedAddress];
+                            PriceFeedState storage n_1_priceFeedState = priceFeedMap[feedProcessingStateList[n + 1].priceFeedAddress];
+                            if(n_1_priceFeedState.totalAllocation * (n_1_priceFeedState.revenuePoolBalance + averageRevenueBalance) > n_priceFeedState.totalAllocation * (n_priceFeedState.revenuePoolBalance + averageRevenueBalance)) {
+                                swapFeedStates(n);
+                            }
+                        }
+                    }
+                    if(m != 0) {m--;} else {break;}
+                }
+
+                // In the case where list was already full, place it on bottom of sorted list if total allocation is greater
+                if (startIndex == MEDIUM_TRUST_FEEDS) {
+                    PriceFeedState storage last_priceFeedState = priceFeedMap[feedProcessingStateList[MEDIUM_TRUST_FEEDS - 1].priceFeedAddress];
+                    if (feedProcessState.rankingMetric > last_priceFeedState.totalAllocation * (last_priceFeedState.revenuePoolBalance + averageRevenueBalance)) {
+                        feedProcessingStateList[MEDIUM_TRUST_FEEDS - 1] = feedProcessState;
+                        startIndex = MEDIUM_TRUST_FEEDS - 1;
+                    }
+                }
+
+                // Bubble up the current feed state as long as it has a greater allocation total
+                if(startIndex < MEDIUM_TRUST_FEEDS) {
+                    while(startIndex != 0) {
+                        // Check if we can move up in list, compare total allocation with entry right above
+                        PriceFeedState storage s_1_priceFeedState = priceFeedMap[feedProcessingStateList[startIndex - 1].priceFeedAddress];
+                        if(feedProcessState.rankingMetric > s_1_priceFeedState.totalAllocation * (s_1_priceFeedState.revenuePoolBalance + averageRevenueBalance)) {
+                            swapFeedStates(startIndex - 1);
+                            startIndex--; // Move up in list
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
         }
-        bytes memory bstr = new bytes(len);
-        uint k = len - 1;
-        while (i != 0){
-            bstr[k--] = byte(uint8(48 + i % 10));
-            i /= 10;
-        }
-        return string(bstr);
     }
 
-    /// @dev Used for debugging
+    function enforceMissedReportPenalty(uint256 dayBeingFinalized, PriceFeedState memory _priceFeedStruct) private {
+        if(_priceFeedStruct.lastPriceDay < dayBeingFinalized) {
+            if(_priceFeedStruct.lastPriceDay > _priceFeedStruct.lastPenaltyDay) {
+                _priceFeedStruct.lastPenaltyDay = _priceFeedStruct.lastPriceDay;
+            }
+            uint256 totalPenalty;
+            for(uint256 i = _priceFeedStruct.lastPenaltyDay + 1; i <= dayBeingFinalized; i++) {
+                uint256 dayPenalty = _priceFeedStruct.revenuePoolBalance * (i - _priceFeedStruct.lastPriceDay) * 3 / 100;
+                totalPenalty += dayPenalty;
+            }
+
+            //TODO: Re-enable this for penalize logic to work.
+            // _priceFeedStruct.revenuePoolBalance -= totalPenalty;
+            // SystemSavings systemSavings = SystemSavings(systemSavingsAddress);
+            // peggedToken.transfer(address(systemSavings), totalPenalty);
+            // systemSavings.registerSavingsPoolTransfer(totalPenalty);
+
+            // uint256 currentCurrencyBalance = peggedToken.balanceOf(address(this));
+            // require (totalRegisteredRevenueBalances <= currentCurrencyBalance, "currency balance should be greater than registered amount");
+        }
+    }
+
+    function swapFeedStates(uint32 index) private {
+        // Swap feed state structs
+        FeedProcessState memory currentFeedState = feedProcessingStateList[index];
+        feedProcessingStateList[index] = feedProcessingStateList[index + 1];
+        feedProcessingStateList[index + 1] = currentFeedState;
+
+        // Update price feed map initialized index
+        priceFeedMap[feedProcessingStateList[index].priceFeedAddress].processingStateIndex = index;
+        priceFeedMap[feedProcessingStateList[index + 1].priceFeedAddress].processingStateIndex = index + 1;
+    }
+
+    uint32 constant public MAX_ALLOCATIONS = 5; // Maximum loan price feed allocations
+
+    function getPriceFromAllocation(Loan.PriceFeedAllocation[MAX_ALLOCATIONS] memory _priceFeedAllocations) public returns (uint256) {
+        uint256 sum;
+        uint256 allocationSum;
+        for (uint256 i = 0; i < 5; i++) {
+            Loan.PriceFeedAllocation memory feedAllocation = _priceFeedAllocations[i];
+            PriceFeedState memory priceFeedState = priceFeedMap[feedAllocation.priceFeedAddress];
+            if(feedAllocation.isAllocation) {
+                if(priceFeedState.lastEthPrice != 0) {
+                    sum += priceFeedState.lastEthPrice * feedAllocation.percentAllocation;
+                    allocationSum += feedAllocation.percentAllocation;
+                }
+            }
+        }
+
+        if(allocationSum != 0) {
+            return sum / allocationSum;
+        } else {return 0;}
+    }
+
+    uint256 public totalRegisteredRevenueBalances;
+
+    function registerFeedRevenueTransfer(address _priceFeedAddress, uint256 _transferValue) public {
+        require(systemLoansAddress != address(0), "systemLoansAddress should be initialized");
+        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
+        require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
+
+        priceFeedMap[_priceFeedAddress].revenuePoolBalance += _transferValue;
+        totalRegisteredRevenueBalances += _transferValue;
+
+        uint256 currentCurrencyBalance = peggedToken.balanceOf(address(this));
+        require (totalRegisteredRevenueBalances <= currentCurrencyBalance, "currency balance should be greater than registered amount");
+    }
+
+
+    function changePriceFeedAllocation(address _priceFeedAddress, uint256 _value, bool isDecrement) public {
+        require(systemLoansAddress != address(0), "systemLoansAddress should be initialized");
+        require(msg.sender == systemLoansAddress, "caller must be system loans contract");
+        require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
+        if(isDecrement) {
+            priceFeedMap[_priceFeedAddress].totalAllocation -= _value;
+        } else {
+            priceFeedMap[_priceFeedAddress].totalAllocation += _value;
+        }
+    }
+
+
+    // function changeDownVoteAllocation(address _priceFeedAddress, uint256 _value, bool isDecrement) public {
+    //     require(systemLoansAddress != address(0), "systemLoansAddress should be initialized");
+    //     require(msg.sender == systemLoansAddress, "caller must be system loans contract");
+    //     require(priceFeedMap[_priceFeedAddress].isPriceFeed, "_priceFeedAddress sholuld be a valid price feed");
+    //     if(isDecrement) {
+    //         priceFeedMap[_priceFeedAddress].totalDownVote -= _value;
+    //     }
+    //     else {
+    //         priceFeedMap[_priceFeedAddress].totalDownVote += _value;
+    //     }
+    // }
+
     event ConsoleLog(string message);
+    event ConsoleLogNumber(uint number);
 }

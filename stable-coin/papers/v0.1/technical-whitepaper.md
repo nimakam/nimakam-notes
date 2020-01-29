@@ -1,12 +1,14 @@
-# \{\{PegLoan\}\}: A trust-minimized collateral-backed stable-coin system
+# \{\{PegLoan\}\}: A trust-minimized collateral-backed stablecoin system
 
 ## Technical research whitepaper v0.1 [dynamic]
 
->Notice: This document is a research proposal, and in no way makes promises about the full functionality of any derived implementation, nor does it represent a commitment to build, deploy or operate such a system. Its sole aims is to envision the process of defining, planning and productizing such a system and product.
+>Notice: This document is a research proposal, and in no way makes promises about the full functionality of any derived implementation, nor does it represent a commitment or intent to build, deploy or operate such a system. Its sole aims is to envision the process of defining, planning and productizing such a system and product.
 
-This research proposal describes a **collateral-backed** **stable-coin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the stable-coin is pegged to the value of a widely accepted **reference currency**.
+### Executive summary
 
-A collateral backed stable-coin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand through adjusting monetary variables using market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. In case of our *Minimum Viable Product (MVP) implemented on Ethereum*, the *native blockchain asset token* is **ETH** and the *reference currency* is **USD ($)**. Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no tokens for governance or equity*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** of the system.
+This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the stablecoin is pegged to the value of a widely accepted **reference currency**.
+
+A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand through adjusting monetary variables using market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. In case of our *Minimum Viable Product (MVP) implemented on Ethereum*, the *native blockchain asset token* is **ETH** and the *reference currency* is **USD ($)**. Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no tokens for governance or equity*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
 
 ## Actors
 
@@ -29,7 +31,7 @@ Additional functionality will be implemented to respectively "mint" or "burn" to
 
 ### Reference currency
 
-This is the real world currency, or unit of account, the pegged currency will be pegged to. For example, the US dollar ($) is the most commonly used reference currency in most existing stable-coin implementations.
+This is the real world currency, or unit of account, the pegged currency will be pegged to. For example, the US dollar ($) is the most commonly used reference currency in most existing stablecoin implementations.
 
 The system is designed such that it would work with any relatively stable currency, or basket of goods, assets and/or currencies. Any user can create a new currency peg to their target currency reference, by deploying the open source contracts including a custom token representing their pegged currency.
 
@@ -37,7 +39,7 @@ The system is designed such that it would work with any relatively stable curren
 
 As mentioned, any public blockchain's native asset token satisfies the role of backing asset given that it is likely to be:
 
-- The most trust-minimized asset token on the blockchain.
+- The most trust-minimized asset token on the blockchain, aka the native token.
 - Widely used as a Store of Value (SoV) by the blockchain users, and early adopters.
 
 It is essential for the system to prevent significant issuance of pegged currency, without securing a corresponding value of backing asset, per loan instance, and for the system as a whole. Similarly, it is crucial for the system to respond to backing asset release requests, when corresponding pegged currency is being returned to the system. In a healthy system, the value of the backing asset token is greater than the pegged currency by a healthy margin, in order to insure against the possibility of a major devaluation in that backing asset.
@@ -279,7 +281,7 @@ Since Ether (ETH) is the other side of the first viable product based on our pro
 
 ### Versioning - in case of emergency (hard-forks)
 
-The ultimate goal of such a decentralized smart contract system is to be ownerless and live forever. That is, if the current open source implementation were the solution to our original stable-coin problem, there should be no subsequent version needed.
+The ultimate goal of such a decentralized smart contract system is to be ownerless and live forever. That is, if the current open source implementation were the solution to our original stablecoin problem, there should be no subsequent version needed.
 
 However, due to possibilities of future upgrades to the underlying blockchain itself, as well as due to the remote possibility that the system may, at some point, operate in some unexpected ways, we are required to at least consider the possibility of winding down this version in favor of a next one.
 
@@ -291,7 +293,7 @@ One of the price feeds to the system on Ethereum can be constructed as a decentr
 
 ## Ecosystem and game theory
 
-The stable-coin system lives on the public blockchain, however the players interacting with it directly or indirectly, all live in the real world and will follow strategies and courses of action, based on their incentives and the changing ecosystem. In order to ensure the success of the stable-coin system, and the money product that it represents, we need to fully understand the ecosystem subsuming it and mitigate any foreseeable issues that may threaten the product's success.
+The stablecoin system lives on the public blockchain, however the players interacting with it directly or indirectly, all live in the real world and will follow strategies and courses of action, based on their incentives and the changing ecosystem. In order to ensure the success of the stablecoin system, and the money product that it represents, we need to fully understand the ecosystem subsuming it and mitigate any foreseeable issues that may threaten the product's success.
 
 ### Strategic dynamic changes
 
@@ -353,7 +355,7 @@ Given that the system is immutable and holds a large amount of state, in the for
 
 ## Community
 
-Community's potential points of common belief:
+As a decentralized system and ecosystem, the healthy operation of \{\{PegLoan\}\} will depend on a community of users, loan takers, feed providers and others. The community's potential points of common belief are:
 
 - **On-chain governance minimization** - Skepticism of governance through tokens, and belief in minimizing it.
 - **Market truth as schelling point** - The common belief that truth is the ecosystem's schelling point. Community members and ecosystem participants believing they can sustainably benefit from helping operate and interacting with the system, and that truthfully reported price feed information is in everyone's interest.

@@ -2,6 +2,16 @@
 
 ## Open issues
 
+### Mapped struct is too large
+
+Error when compiling using truffle.
+
+`InternalCompilerError: Stack too deep when compiling inline assembly: Variable value0 is 1 slot(s) too deep inside the stack.`
+
+Caused by a struct having too many entries specifically `struct PriceFeedState` in the `SystemFeeds` contract.
+
+Temporary mitigation: Moved state to a different struct, that happened to fall in a separate contract, namely `struct TrustedPriceFeedState` in the `System` contract.
+
 ### System contract is too large for deployment
 
 Error while running truffle tests or migration, stating that migration was unsuccessful due to running out of gas.

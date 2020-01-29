@@ -1,6 +1,6 @@
 # Ecosystem
 
-The stable-coin system lives on the public blockchain, however the players interacting with it directly or indirectly, all live in the real world and will follow strategies and courses of action, based on their incentives and the changing ecosystem. In order to ensure the success of the stable-coin system, and the money product that it represents, we need to fully understand the ecosystem subsuming it and mitigate any foreseeable issues that may threaten the product's success.
+The stablecoin system lives on the public blockchain, however the players interacting with it directly or indirectly, all live in the real world and will follow strategies and courses of action, based on their incentives and the changing ecosystem. In order to ensure the success of the stablecoin system, and the money product that it represents, we need to fully understand the ecosystem subsuming it and mitigate any foreseeable issues that may threaten the product's success.
 
 - [Vision](./vision.md)
 - [The product](./product.md)
@@ -74,11 +74,12 @@ As the UX for performing loan operations becomes aggregated amongst a few provid
 
 A few possibilities around shifting of strategic power between groups of actors:
 
-- Conflict between price feed providers - Sub-group of price feed providers going rogue to eliminate another group from ecosystem
-- Price feed providers collusion - Feed providers colluding to abuse the system through liquidations
-- Price feed providers and loan taker collusion - Feed providers and loan takers colluding to take advantage of the money holders and users
-- Influence consolidation through loan taking aggregators - Consolidation and influence of loan takers preferences through aggregators (like InstaDapp), and collusion with price feed providers for kickbacks
-- Shortage of pegged currency - This can occur during wind-down of protocol in case of hard-fork, causing loss of collateral for loan takers
+- **External player (whale) capture** - External players with great financial resources coming in and controlling the source of truth, or disrupting the system otherwise 
+- **Conflict between price feed providers** - Sub-group of price feed providers going rogue to eliminate another group from ecosystem
+- **Price feed provider collusion** - Feed providers colluding to abuse the system through liquidations
+- **Price feed providers and loan taker collusion** - Feed providers and loan takers colluding to take advantage of the money holders and users
+- **Influence consolidation through loan taking aggregators** - Consolidation and influence of loan takers preferences through aggregators (like InstaDapp), and collusion with price feed providers for kickbacks
+- **Shortage of pegged currency** - This could theoretically occur due to burned or lost tokens, and during wind-down of protocol in case of hard-fork, causing loss of collateral for loan takers
 
 ToDo - Detail above dynamic changes along with mitigation steps considered by the system
 
@@ -86,13 +87,13 @@ ToDo - Detail above dynamic changes along with mitigation steps considered by th
 
 A few possible outcomes around changes to the protocol itself:
 
-- Perpetual operation (no-fork) [default] - The same community will rely on the same protocol perpetually.
-- Soft-fork - We end up with 2 sub-communities and 2 protocols adopted by each.
-- Hard-fork - We end up with the same community moving to a new protocol. The old protocol will be transitioned and retired.
+- **Perpetual operation (no-fork)** [default] - The same community will rely on the same protocol perpetually.
+- **Soft-fork** - We end up with 2 sub-communities and 2 protocols adopted by each.
+- **Hard-fork** - We end up with the same community moving to a new protocol. The old protocol will be transitioned and retired.
 
 #### Perpetual operation (no-fork)
 
-Summary: The same community will rely on the same protocol perpetually.
+Perpetual operation or no-fork describes the scenario where no changes are made to the protocol, and the community agrees to rely on the same protocol perpetually.
 
 A successful general-purpose consumer money product is assumed to be held and used by large numbers of everyday people, which means the cost of altering the money during usage is extremely high to the individual people using it, as well as any other stakeholders. As a result, perpetual operation, meaning no disruptions to routine operation forever, is the ideal end-state of the system as designed, one that incurs the least costs in a large number of people having to switch from one protocol to another.
 
@@ -100,7 +101,7 @@ When the viability of the ecosystem are not in significant danger, this should b
 
 #### Soft-fork
 
-Summary: We end up with 2 sub-communities and 2 protocols adopted by each.
+Soft-fork is the intentional splitting of the communities, where we end up with 2 sub-communities and 2 protocols adopted by each.
 
 There is always a non-zero probability that beliefs about operation of the ecosystem, amongst its actors could increasingly diverge in time, in which case, a community split is possible. In such a case, those whose beliefs are more aligned with the existing operations and the original parameters of the system are likely to stay with it, and incur less costs due to not having to switch to a new version. The existing sub-community however will incur a lot more cost.
 
@@ -110,21 +111,21 @@ The original community will also experience a period of less certainty due to th
 
 #### Hard-fork
 
-Summary: We end up with the same community moving to a new protocol. The old protocol will be transitioned and retired.
+Hard-fork is the intentional transition and retirement of the old protocol, where we end up with the same community moving to a new protocol.
 
 There is always a non-zero probability that the community as a whole may come to a conclusion that changes to the on-chain protocol are required in order for the ecosystem to remain viable. In such a case, the community as a whole would have to coordinate simultaneous transition to a new version of the system, one that uses parameters agreed upon by the community as a whole.
 
 Given that the system is immutable and holds a large amount of state, in the form of value, transitioning out of it will be very costly, including but not limited to:
 
-- **Uncertainty and unpredictability** is a significant cost to an ecosystem that operates optimally based on predictability, trust, and truthful price reporting as a schelling point for all stakeholders. Any effective mitigation to the this will include:
-  - An effective transition plan, one that considers mitigations to possible outcomes, and ensures the interests of all stakeholders are preserved as much as possible.
-  - Clear communication of the transition to all stakeholders, instructions on how to proceed.
+- **Unpredictability** is a significant cost to an ecosystem that operates optimally based on predictability, trust, and truthful price reporting as a schelling point for all stakeholders. Any effective mitigation to the this will include:
+  - **Transition planning** - An effective transition plan, one that considers mitigations to possible outcomes, and ensures the interests of all stakeholders are preserved as much as possible.
+  - **Coordination** - Clear communication of the transition to all stakeholders, instructions on how to proceed.
 - **Price volatility** is inevitable given that transition out of the current system requires movement of large amounts of value out of the system, in form of exchanging out of the pegged currency money, and in form of closing loans (debt positions) using large amounts of purchased pegged currency. Higher amounts of uncertainty, as mentioned above, will adversely affect volatility.
 - **Money users' overhead** - very high cost of having to even care about this, cost of effort needed to exchange out of the pegged currency.
 - **Money users' exchange costs** - Exchanging tokens has a non-zero fee regardless of the exchange used, this is no different.
 - **Loan takers' overhead** - high cost of having to care about this in the first place, as well as the effort to purchase sufficient pegged currency to cover loans (debt positions) and close them.
 - **Loan takers' exchange costs** -
-- **Price feed provider slashing** - the cost of exiting price feed providers being slashed for the drops in their allocation numbers, as well as losses of time based payouts.
+- **Price feed provider penalties** - the cost of exiting price feed providers being penalized for the drops in their allocation numbers, as well as losses of time based payouts.
 - **Possibility of un-closable loans due to lost pegged currency** -
 - ToDo - others ...
 
@@ -132,8 +133,12 @@ Given that the system is immutable and holds a large amount of state, in the for
 
 Community's potential points of common belief:
 
-- **On-chain governance minimization** - Skepticism of governance through tokens, and belief in minimizing it.
-- **Truth as schelling point** - Community members believing that they can sustainably profit from helping operate and interacting with the system, and thus its continuous operation based on truthful price feed information is in everyone's interest. That is, truth is the system's schelling point.
-- **Crypto-nationalism** - (as opposed to maximalism) is the allegiance to, and feeling of belonging to, a specific public blockchain, and that it forms a unconventional sovereign nation on the internet. This often overlaps with the following beliefs also:
-  - The native digital asset of this specific public blockchain is the most trust-minimized and is a superior store of value.
-  - The specific blockchain will become the most ubiquitously used public blockchain in the future.
+- **Maximizing governance decentralization** - Skepticism of governance through tokens, and belief in minimizing it, in order to further decentralize protocols. Some benefits are resistance to capture and capital efficiency.
+- **Market truth as schelling point** - The common belief that truth can become the ecosystem's schelling point. Community members and ecosystem participants believing they can sustainably benefit from helping operate and interacting with the system, and that truthfully reported price feed information is in everyone's interest.
+- **Crypto-sovereignty** - The belief that sufficiently decentralized public blockchains as a whole from an unconventional sovereign jurisdiction on the internet, one that lacks many of the restrictions and friction points of today's geographical jurisdiction, and is more suitable for free economic activity. This consists of a few other shared beliefs around censorship resistance, decentralization and trust minimization.
+- **Crypto-nationalism** - (a better and alternative definition of token maximalism) is the sometime exclusive allegiance to a specific public blockchain. It consists of the following set of beliefs:
+  - **Citizenship** - Belief and feeling of belonging to that specific public blockchains community
+  - **Inclusive nationalism** - The specific blockchain represents the best potential unconventional sovereign jurisdiction on the internet, which is akin to a nation. Membership in this group or nation is not mutually exclusive to others.
+  - **Exclusive nationalism** - More extreme versions of crypto-nationalism will advocate for exclusive citizenship in many contexts, at the cost of other public blockchains.
+  - **Exceptionalism** - The native digital asset of this specific public blockchain is the most trust-minimized and is a superior store of value.
+  - **Futurism** - The specific blockchain will become the most ubiquitously used public blockchain in the future, and will transform our digital lives.

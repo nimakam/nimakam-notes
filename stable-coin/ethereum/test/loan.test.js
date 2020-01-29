@@ -1,278 +1,273 @@
-const PeggedToken = artifacts.require("PeggedToken");
-const System = artifacts.require("System");
-const SystemFeeds = artifacts.require("SystemFeeds");
-const SystemLoans = artifacts.require("SystemLoans");
-const Loan = artifacts.require("Loan");
 const TestLoanController = artifacts.require("TestLoanController");
-const PriceFeed = artifacts.require("PriceFeed");
-const TOKEN_DECIMALS = 18;
-const RATE_DECIMALS = 6;
-const MAX_ALLOCATIONS = 5;
-const ALLOCATION_100_PERCENT = 100;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 contract('Loan', accounts => {
-    const systemCreator = accounts[0];
-    const moneyUser = accounts[1];    
-    const loanOwner = accounts[2];
-    const priceFeedOwner = accounts[3];
-    let system, peggedToken, systemFeeds, systemLoans;
-    let defaultPriceFeed, secondPriceFeed, defaultAllocations, multiAllocations
+    let helpers = require("./helpers.js");
+    let exceptions = require("./exceptions.js");
+    let contracts, users;
+    let defaultPriceFeed, secondPriceFeed, multiAllocations;
 
     before(async function () {
-        system = await System.deployed()
-        systemFeeds = await SystemFeeds.deployed()
-        systemLoans = await SystemLoans.deployed()
-        peggedToken = await PeggedToken.deployed()
+        contracts = await helpers.ensureContractsDeployed();
+        users = helpers.getUsers(accounts);
 
-        // console.log("\t>System address: " + system.address)
-        // console.log("\t>SystemFeeds address: " + systemFeeds.address)
-        // console.log("\t>SystemLoans address: " + systemLoans.address)
-        // console.log("\t>PeggedToken address: " + peggedToken.address)
-
-        defaultPriceFeed = await createPriceFeed();
-        let timestamp = await latestTimestamp()
-        const instantPrice = { medianEthRate : 200 * 10 ** 10, priceTime : timestamp , callTime: timestamp }
-        await defaultPriceFeed.postInstantPrice(instantPrice, {from: priceFeedOwner})
-        const latestInstantPrice = await systemFeeds.priceFeed_latestInstantPrice.call()
-        //assert.equal(200 * 10 ** RATE_DECIMALS, latestInstantPrice.value.toString())  
-
-        const defaultAllocation = getAllocation(defaultPriceFeed.address.toString(), 100)
-        defaultAllocations = getAllocations(defaultAllocation)
-
-        secondPriceFeed = await createPriceFeed();
-        const allocation1 = getAllocation(defaultPriceFeed.address.toString(), 71)
-        const allocation2 = getAllocation(secondPriceFeed.address.toString(), 29)
-        multiAllocations = getAllocations(allocation1, allocation2)
+        let ethPrice = 200.0;
+        let pegPrice = 1.0;
+        let ethDeposit = 1.23456;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        
+        defaultPriceFeed = await helpers.windDownAndBootstrapSystem(contracts, users, ethDeposit, currencyIssuance, ethPrice, pegPrice);
+        
+        secondPriceFeed = await helpers.createPriceFeed(contracts, users);
+        multiAllocations = helpers.getFeedAllocations(defaultPriceFeed, secondPriceFeed)
     });
 
-    const emptyAllocation = {priceFeedAddress: ZERO_ADDRESS, percentAllocation: 0, isAllocation: false };
-    function getAllocation(address, allocation, isAllocation = true) { return {priceFeedAddress: address, percentAllocation: allocation, isAllocation: isAllocation } }
-    function getAllocations(allocation1 , allocation2 = emptyAllocation, allocation3 = emptyAllocation, allocation4 = emptyAllocation, allocation5 = emptyAllocation) { return [allocation1, allocation2, allocation3, allocation4, allocation5] }
-
-    async function createPriceFeed()
-    {
-        await systemFeeds.createPriceFeed({from: priceFeedOwner})
-        newPriceFeedAddress = await systemFeeds.lastNewAddress.call()  
-        const priceFeed = await PriceFeed.at(newPriceFeedAddress)
-        // console.log("\t>new PriceFeed address: " + priceFeed.address)
-
-        return priceFeed
-    }    
-
-    it('can be created by external account', async () => {       
-        const newLoan = await createLoan()
+    // see [Loan creation agent - external account vs controller contract](./scenarios/#loan-creation-agent---external-account-vs-controller-contract)
+    it('can be created by external account', async () => {
+        const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed, secondPriceFeed)
         let readOwnerAddress = await newLoan.owner.call()
-        assert.equal(loanOwner, readOwnerAddress)
+        assert.equal(users.loanOwner, readOwnerAddress)
 
-        let isLoan = await systemLoans.loanMap.call(newLoan.address)
+        let isLoan = await contracts.systemLoans.loanMap.call(newLoan.address)
         assert.isTrue(isLoan)
 
         const loanSystemLoansAddress = await newLoan.systemLoans.call()
         const loanSystemAddress = await newLoan.system.call()
-        assert.equal(system.address, loanSystemAddress)
-        assert.equal(system.address, loanSystemAddress)
+        assert.equal(contracts.systemLoans.address, loanSystemLoansAddress)
+        assert.equal(contracts.system.address, loanSystemAddress)
     });
 
-    async function createLoan()
-    {
-        await systemLoans.createLoan({from: loanOwner})
-        const newLoanAddress = await systemLoans.lastNewAddress.call()                
-        const newLoan = await Loan.at(newLoanAddress)
-        return newLoan;
-    }
-
-    it('can be created by controller contract', async () => {   
-        const loanControllerOwner = loanOwner;
-        const testLoanController = await TestLoanController.new(systemLoans.address, { from: loanControllerOwner })
+   // see [Loan creation agent - external account vs controller contract](./scenarios/#loan-creation-agent---external-account-vs-controller-contract)
+   it('can be created by controller contract', async () => {   
+        const loanControllerOwner = users.loanOwner;
+        const testLoanController = await TestLoanController.new(contracts.systemLoans.address, { from: loanControllerOwner })
 
         let readLoanOwnerAddress = await testLoanController.owner.call()
-        assert.equal(loanOwner, readLoanOwnerAddress)
+        assert.equal(users.loanOwner, readLoanOwnerAddress)
 
         let readLoanAddress = await testLoanController.loan.call()
-        let newLoan = await Loan.at(readLoanAddress)
+        let newLoan = await helpers.Loan.at(readLoanAddress)
 
-        let loanStruct = await systemLoans.loanMap.call(newLoan.address)
+        let loanStruct = await contracts.systemLoans.loanMap.call(newLoan.address)
         let isLoan = loanStruct
         assert.isTrue(isLoan)
 
         const loanSystemAddress = await newLoan.system.call()
-        assert.equal(system.address, loanSystemAddress)
+        assert.equal(contracts.system.address, loanSystemAddress)
 
-        let _ethValue = 123456
-
+        let ethDeposit = 1.23
         await testLoanController.allocatePriceFeeds(multiAllocations, {from: loanControllerOwner});
-        await testLoanController.depositEth({ value: _ethValue, from: loanControllerOwner })
+        await testLoanController.depositEth({ value: helpers.toOnChainString(ethDeposit), from: loanControllerOwner })
 
         const loanEthBalance = await web3.eth.getBalance(newLoan.address)
-        assert.equal(_ethValue, loanEthBalance)
+        assert.equal(helpers.toOnChainDouble(ethDeposit), loanEthBalance)
     });
 
+    // See [Getting a loan](./scenarios.md#getting-a-loan)
     it('can allocate price feeds after creation', async () => {
-        const newLoan = await createLoan(123456)
+        const newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed)
 
-        const old_loan_priceFeedAllocation1 = await systemFeeds.priceFeedMap(defaultPriceFeed.address.toString());
-        const old_loan_priceFeedAllocationNumber1 = old_loan_priceFeedAllocation1.totalAllocation;
-        const old_loan_priceFeedAllocation2 = await systemFeeds.priceFeedMap(secondPriceFeed.address.toString());
-        const old_loan_priceFeedAllocationNumber2 = old_loan_priceFeedAllocation2.totalAllocation;
-        const old_depositTotal = await systemLoans.depositTotal.call()
+        let defaultAllocation_pre = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation_pre = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+        const depositTotal_pre = await contracts.systemLoans.depositTotal.call()
 
-        await newLoan.allocatePriceFeeds(multiAllocations, {from: loanOwner});
+        await newLoan.allocatePriceFeeds(multiAllocations, {from: users.loanOwner});
         
-        const new_loan_priceFeedAllocation1 = await systemFeeds.priceFeedMap(defaultPriceFeed.address.toString());
-        const new_loan_priceFeedAllocationNumber1 = new_loan_priceFeedAllocation1.totalAllocation;
-        const new_loan_priceFeedAllocation2 = await systemFeeds.priceFeedMap(secondPriceFeed.address.toString());
-        const new_loan_priceFeedAllocationNumber2 = new_loan_priceFeedAllocation2.totalAllocation;
-        const new_depositTotal = await systemLoans.depositTotal.call()
+        let defaultAllocation = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+        const depositTotal = await contracts.systemLoans.depositTotal.call()
 
-        assert.equal(0, new_loan_priceFeedAllocationNumber1 - old_loan_priceFeedAllocationNumber1);
-        assert.equal(0, new_loan_priceFeedAllocationNumber2 - old_loan_priceFeedAllocationNumber2);
-        assert.equal(0, new_depositTotal - old_depositTotal);
+        assert.equal(0, defaultAllocation - defaultAllocation_pre);
+        assert.equal(0, secondAllocation - secondAllocation_pre);
+        assert.equal(0, depositTotal - depositTotal_pre);
     });
 
+    // See [Getting a loan](./scenarios.md#getting-a-loan)
     it('can deposit ETH with multiple allocated price feeds', async () => {
-        const _ethValue = 123456
-        const old_depositTotal = await systemLoans.depositTotal.call()
-        const old_loan_priceFeedAllocation1 = await systemFeeds.priceFeedMap(defaultPriceFeed.address.toString());
-        const old_loan_priceFeedAllocationNumber1 = old_loan_priceFeedAllocation1.totalAllocation.toString();
-        const old_loan_priceFeedAllocation2 = await systemFeeds.priceFeedMap(secondPriceFeed.address.toString());
-        const old_loan_priceFeedAllocationNumber2 = old_loan_priceFeedAllocation2.totalAllocation.toString();
-        const newLoan = await createLoanAndDepositEth(_ethValue, true) 
+        let ethDeposit = 1.23;
+
+        let defaultAllocation_pre = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation_pre = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+        const depositTotal_pre = await contracts.systemLoans.depositTotal.call()
+        const issuanceTotal_pre = await contracts.systemLoans.issuanceTotal.call()
+
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed, secondPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});        
 
         const loanEthBalance = await web3.eth.getBalance(newLoan.address)
-        assert.equal(_ethValue, loanEthBalance)
+        assert.equal(helpers.toOnChainString(ethDeposit), loanEthBalance)
 
-        const new_depositTotal = await systemLoans.depositTotal.call()
-        assert.equal(_ethValue , new_depositTotal - old_depositTotal)
+        const depositTotal = await contracts.systemLoans.depositTotal.call()
+        let defaultAllocation = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+        const issuanceTotal = await contracts.systemLoans.issuanceTotal.call()
 
-        const loan_priceFeedAllocation1 = await systemFeeds.priceFeedMap(defaultPriceFeed.address.toString());
-        const loan_priceFeedAllocationNumber1 = loan_priceFeedAllocation1.totalAllocation.toString();
-        assert.equal(parseInt(71 * _ethValue / ALLOCATION_100_PERCENT), loan_priceFeedAllocationNumber1 - old_loan_priceFeedAllocationNumber1);
-
-        const loan_priceFeedAllocation2 = await systemFeeds.priceFeedMap(secondPriceFeed.address.toString());
-        const loan_priceFeedAllocationNumber2 = loan_priceFeedAllocation2.totalAllocation.toString();
-        assert.equal(parseInt(29 * _ethValue / ALLOCATION_100_PERCENT), loan_priceFeedAllocationNumber2 - old_loan_priceFeedAllocationNumber2);
-
-        // Sum of allocation balances may not equal the final value due to rounding errors.
-        // assert.equal(_value, parseInt(loan_priceFeedAllocationNumber1) + parseInt(loan_priceFeedAllocationNumber2))
+        assert.equal(helpers.toOnChainString(ethDeposit) , depositTotal - depositTotal_pre)
+        assert.equal(0, issuanceTotal - issuanceTotal_pre);
+        assert.equal(0, secondAllocation - secondAllocation_pre);
+        assert.equal(0, defaultAllocation - defaultAllocation_pre);
     });
 
-    it('can deposit ETH then change feed allocation', async () => {
-        const _value = 123456
-        const newLoan = await createLoanAndDepositEth(_value)
+    // See [Getting a loan](./scenarios.md#getting-a-loan)
+    it('can be used to issue currency with single allocation', async () => {
+        let ethPrice = 200.0;
+        let ethDeposit = 1.23;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
 
-        const old_loan_priceFeedAllocation1 = await systemFeeds.priceFeedMap(defaultPriceFeed.address.toString());
-        const old_loan_priceFeedAllocationNumber1 = old_loan_priceFeedAllocation1.totalAllocation;
-        const old_loan_priceFeedAllocation2 = await systemFeeds.priceFeedMap(secondPriceFeed.address.toString());
-        const old_loan_priceFeedAllocationNumber2 = old_loan_priceFeedAllocation2.totalAllocation;
-        const old_depositTotal = await systemLoans.depositTotal.call()
+        const issuanceTotal_pre = await contracts.systemLoans.issuanceTotal.call()
+        let defaultAllocation_pre = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
 
-        await newLoan.allocatePriceFeeds(multiAllocations, {from: loanOwner});
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});        
+        await newLoan.issueCurrency(helpers.toOnChainString(currencyIssuance), {from: users.loanOwner});
 
-        const new_depositTotal = await systemLoans.depositTotal.call()
-        assert.equal(0 , new_depositTotal - old_depositTotal) // Deposit pool hasn't
-        const loan_priceFeedAllocation1 = await systemFeeds.priceFeedMap(defaultPriceFeed.address.toString());
-        const loan_priceFeedAllocationNumber1 = loan_priceFeedAllocation1.totalAllocation;
-        assert.equal(parseInt(71 * _value / ALLOCATION_100_PERCENT) - _value, loan_priceFeedAllocationNumber1 - old_loan_priceFeedAllocationNumber1);
-        const loan_priceFeedAllocation2 = await systemFeeds.priceFeedMap(secondPriceFeed.address.toString());
-        const loan_priceFeedAllocationNumber2 = loan_priceFeedAllocation2.totalAllocation;
-        assert.equal(parseInt(29 * _value / ALLOCATION_100_PERCENT), loan_priceFeedAllocationNumber2 - old_loan_priceFeedAllocationNumber2);
+        const issuanceTotal = await contracts.systemLoans.issuanceTotal.call()
+        let defaultAllocation = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
 
-        // Sum of allocation balances may not equal the final value due to rounding errors
-        // assert.equal(_value, parseInt(loan_priceFeedAllocationNumber1) + parseInt(loan_priceFeedAllocationNumber2))
+        assert.equal(issuanceTotal - issuanceTotal_pre, currencyIssuance * 10 ** helpers.PRICE_DECIMALS)
+        assert.equal(defaultAllocation - defaultAllocation_pre, helpers.toOnChainString(currencyIssuance));
+        
     });
 
-    async function createLoanAndDepositEth(ethDeposit, isMultiAllocation = false)
-    {
-        const newLoan = await createLoan()
-        await newLoan.allocatePriceFeeds(!isMultiAllocation ? defaultAllocations : multiAllocations, {from: loanOwner});  
-        await newLoan.depositEth({value: ethDeposit, from: loanOwner});
-        return newLoan;
-    }
+    // See [Getting a loan](./scenarios.md#getting-a-loan)
+    it('can be used to issue currency with multiple allocations', async () => {
+        let ethPrice = 200.0;
+        let ethDeposit = 1.23;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100.0));
 
-    it('can be used to issue currency', async () => {
-        const old_issuanceTotal = await systemLoans.issuanceTotal.call()
+        const issuanceTotal_pre = await contracts.systemLoans.issuanceTotal.call()
+        let defaultAllocation_pre = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation_pre = await helpers.getFeedAllocation(contracts, secondPriceFeed);
 
-        await createLoanAndIssueCurrency(10 ** 5, 10 ** 7)  
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed, secondPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});     
+        await newLoan.issueCurrency(helpers.toOnChainString(currencyIssuance), {from: users.loanOwner});
 
-        const issuanceTotal = await systemLoans.issuanceTotal.call()
-        assert.equal(10 ** 7 , issuanceTotal - old_issuanceTotal)
+        const issuanceTotal = await contracts.systemLoans.issuanceTotal.call()
+        let defaultAllocation = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+
+        assert.equal(issuanceTotal - issuanceTotal_pre, currencyIssuance * 10 ** helpers.PRICE_DECIMALS)
+        assert.equal(defaultAllocation - defaultAllocation_pre, 7 * currencyIssuance * 10 ** helpers.PRICE_DECIMALS / 10);   
+        assert.equal(secondAllocation - secondAllocation_pre, 3 * currencyIssuance * 10 ** helpers.PRICE_DECIMALS / 10);
     });
 
-    async function createLoanAndIssueCurrency(ethDeposit, issueCurrency)
-    {
-        const newLoan = await createLoanAndDepositEth(ethDeposit)
-        await newLoan.issueCurrency(issueCurrency.toString(),  {from: loanOwner});
-        return newLoan;
-    }
+    // see [Custom changes to a loan](./scenarios.md#custom-changes-to-a-loan)
+    it('can issue currency then change feed allocation', async () => {
+        let ethPrice = 200.0;
+        let ethDeposit = 1.23;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100.0));
 
-    it('can be used to issue and transfer currency', async () => {
-        const old_moneyUserBalance = await peggedToken.balanceOf(moneyUser);
+        const issuanceTotal_pre = await contracts.systemLoans.issuanceTotal.call()
+ 
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});        
+ 
+        let defaultAllocation_pre = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation_pre = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+ 
+        await newLoan.issueCurrency(helpers.toOnChainString(currencyIssuance), {from: users.loanOwner});
+        await newLoan.allocatePriceFeeds(multiAllocations, {from: users.loanOwner});
+
+        const issuanceTotal = await contracts.systemLoans.issuanceTotal.call()
+        let defaultAllocation = await helpers.getFeedAllocation(contracts, defaultPriceFeed);
+        let secondAllocation = await helpers.getFeedAllocation(contracts, secondPriceFeed);
+
+        assert.equal(helpers.toOnChainDouble(currencyIssuance), issuanceTotal - issuanceTotal_pre)
+        assert.equal(helpers.toOnChainDouble(0.7 * currencyIssuance), defaultAllocation - defaultAllocation_pre);   
+        assert.equal(helpers.toOnChainDouble(0.3 * currencyIssuance), secondAllocation - secondAllocation_pre);
+    });
+
+    // See [Getting a loan](./scenarios.md#getting-a-loan)
+    it('can be used to issue and withdraw currency', async () => {
+        let ethPrice = 200.0;
+        let ethDeposit = 1.23;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100.0));
+        let currencyWithdrawal = helpers.roundPrice(0.6 * currencyIssuance);
+        let secondCurrencyWithdrawal = helpers.roundPrice(0.4 * currencyIssuance);
+
+        const moneyUserBalance_pre = await contracts.peggedToken.balanceOf(users.moneyUser);
       
-        const newLoan = await createLoanIssueAndWithdrawCurrency(10 ** 5, 10 ** 7, 0.6 * 10 ** 7);
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});        
+        await newLoan.issueCurrency(helpers.toOnChainString(currencyIssuance), {from: users.loanOwner});
+        await newLoan.withdrawCurrency(users.moneyUser, helpers.toOnChainString(currencyWithdrawal), {from: users.loanOwner});
 
-        const new_moneyUserBalance = await peggedToken.balanceOf(moneyUser);
-        assert.equal(0.6 * 10 ** 7 , new_moneyUserBalance - old_moneyUserBalance);
-        const loanCurrencyBalance = await peggedToken.balanceOf(newLoan.address);
-        assert.equal(0.4 * 10 ** 7 , loanCurrencyBalance.toString());
+        const moneyUserBalance = await contracts.peggedToken.balanceOf(users.moneyUser);
+        const loanCurrencyBalance = await contracts.peggedToken.balanceOf(newLoan.address);
 
-        await newLoan.withdrawCurrency(moneyUser, parseInt(0.4 * 10 ** 7),  {from: loanOwner});
+        assert.equal(helpers.toOnChainDouble(currencyWithdrawal), moneyUserBalance - moneyUserBalance_pre);
+        assert.equal(helpers.toOnChainDouble(secondCurrencyWithdrawal), loanCurrencyBalance.toString());
 
-        const newer_moneyUserBalance = await peggedToken.balanceOf(moneyUser);
-        assert.equal(10 ** 7 , newer_moneyUserBalance - old_moneyUserBalance);
-        const newer_loanCurrencyBalance = await peggedToken.balanceOf(newLoan.address);
-        assert.equal(0 , newer_loanCurrencyBalance.toString());
+        await newLoan.withdrawCurrency(users.moneyUser, helpers.toOnChainString(secondCurrencyWithdrawal),  {from: users.loanOwner});
+
+        const moneyUserBalance_post = await contracts.peggedToken.balanceOf(users.moneyUser);
+        const loanCurrencyBalance_post = await contracts.peggedToken.balanceOf(newLoan.address);
+        
+        assert.equal(helpers.toOnChainDouble(currencyIssuance), moneyUserBalance_post - moneyUserBalance_pre);
+        assert.equal(0, loanCurrencyBalance_post.toString());
     });
 
-    async function createLoanIssueAndWithdrawCurrency(ethDeposit, issueCurrency, withdrawCurrency)
-    {
-        const newLoan = await createLoanAndIssueCurrency(ethDeposit, issueCurrency);
+   // see [Custom changes to a loan](./scenarios.md#custom-changes-to-a-loan)
+   // see [Closing a loan](./scenarios#closing-a-loan)
+   it('can be used to deposit, issue, withdraw, deposit and return currency', async () => {
+        let ethPrice = 200.0;
+        let ethDeposit = 1.23;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100.0));
+        let currencyWithdrawal = helpers.roundPrice(0.6 * currencyIssuance);
+        let currencyReturn = helpers.roundPrice(0.4 * currencyIssuance);
+        let currencyDeposit = helpers.roundPrice(0.1 * currencyIssuance);
 
-        await newLoan.withdrawCurrency(moneyUser, withdrawCurrency,  {from: loanOwner});
-        return newLoan;
-    }
+        const moneyUserBalance_pre = await contracts.peggedToken.balanceOf(users.moneyUser);
+        const issuanceTotal_pre = await contracts.systemLoans.issuanceTotal.call()
+      
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});        
+        await newLoan.issueCurrency(helpers.toOnChainString(currencyIssuance), {from: users.loanOwner});
+        await newLoan.withdrawCurrency(users.moneyUser, helpers.toOnChainString(currencyWithdrawal), {from: users.loanOwner});
 
-    it('can be used to deposit and reverse currency issuance', async () => {
-        const older_moneyUserBalance = await peggedToken.balanceOf(moneyUser);
-        await createLoanIssueAndWithdrawCurrency(10 ** 5, 10 ** 7, 0.6 * 10 ** 7);
-        const old_moneyUserBalance = await peggedToken.balanceOf(moneyUser);
-        const newLoan = await createLoanIssueAndWithdrawCurrency(10 ** 5, 10 ** 7, 0.6 * 10 ** 7);
+        const moneyUserBalance = await contracts.peggedToken.balanceOf(users.moneyUser);
+        const loanCurrencyBalance = await contracts.peggedToken.balanceOf(newLoan.address);
+        const issuanceTotal = await contracts.systemLoans.issuanceTotal.call()
+        const currentIssuance = await newLoan.currentIssuance.call()
 
-        const loanCurrencyBalance = await peggedToken.balanceOf(newLoan.address);
-        assert.equal(0.4 * 10 ** 7 , loanCurrencyBalance.toString());
+        assert.equal(helpers.toOnChainDouble(currencyWithdrawal), moneyUserBalance - moneyUserBalance_pre);
+        assert.equal(helpers.toOnChainDouble(currencyIssuance - currencyWithdrawal), loanCurrencyBalance.toString());
+        assert.equal(helpers.toOnChainDouble(currencyIssuance), currentIssuance.toString());
+        assert.equal(helpers.toOnChainDouble(currencyIssuance), issuanceTotal - issuanceTotal_pre);
 
-        await peggedToken.transfer(newLoan.address, 1.6 * 10 ** 7, {from: moneyUser})
+        await contracts.peggedToken.transfer(newLoan.address, helpers.toOnChainString(currencyDeposit), {from: users.moneyUser});
+        await newLoan.returnCurrency(helpers.toOnChainString(currencyReturn),  {from: users.loanOwner});
 
-        const loanCurrencyBalance2 = await peggedToken.balanceOf(newLoan.address);
-        assert.equal(2.0 * 10 ** 7, loanCurrencyBalance2.toString())
+        const moneyUserBalance_post = await contracts.peggedToken.balanceOf(users.moneyUser);
+        const loanCurrencyBalance_post = await contracts.peggedToken.balanceOf(newLoan.address);
+        const issuanceTotal_post = await contracts.systemLoans.issuanceTotal.call()        
+        const currentIssuance_post = await newLoan.currentIssuance.call()
 
-        await newLoan.returnCurrency(10 ** 7,  {from: loanOwner});
-
-        const loanCurrencyBalance3 = await peggedToken.balanceOf(newLoan.address);
-        assert.equal(1.0 * 10 ** 7, loanCurrencyBalance3.toString())
-
-        await newLoan.withdrawCurrency(moneyUser, 10 ** 7,  {from: loanOwner});
-
-        const newer_moneyUserBalance = await peggedToken.balanceOf(moneyUser);
-        assert.equal(0.6 * 10 ** 7 , newer_moneyUserBalance - older_moneyUserBalance);
-        assert.equal(0 , newer_moneyUserBalance - old_moneyUserBalance);        
-        const newer_loanCurrencyBalance = await peggedToken.balanceOf(newLoan.address);
-        assert.equal(0 , newer_loanCurrencyBalance.toString());
+        assert.equal(helpers.toOnChainDouble(currencyWithdrawal - currencyDeposit), moneyUserBalance_post - moneyUserBalance_pre);
+        assert.equal(helpers.toOnChainDouble(currencyDeposit), loanCurrencyBalance_post.toString());
+        assert.equal(helpers.toOnChainDouble(currencyReturn), issuanceTotal - issuanceTotal_post);
+        assert.equal(helpers.toOnChainDouble(currencyWithdrawal), currentIssuance_post.toString());
     });
 
-    it('can be used to withdraw ETH after issuing currency', async () => {
-        const newLoan = await createLoanAndIssueCurrency(10 ** 15, 10 ** 17);
-        const old_loanOwnerEthBalance = await web3.eth.getBalance(moneyUser)
+   // see [Custom changes to a loan](./scenarios.md#custom-changes-to-a-loan)
+   it('can be used to withdraw ETH after issuing currency', async () => {
+        let ethPrice = 200.0;
+        let ethDeposit = 1.23;
+        let currencyIssuance = helpers.roundPrice(0.6 * ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100.0));
+        let ethWithdrawal = helpers.roundPrice(0.4 * ethDeposit);
 
-        await newLoan.withdrawEth(moneyUser, 0.2 * 10 ** 15, {from: loanOwner});
+        let newLoan = await helpers.createLoan(contracts, users, defaultPriceFeed);
+        await newLoan.depositEth({value: helpers.toOnChainString(ethDeposit), from: users.loanOwner});        
+        await newLoan.issueCurrency(helpers.toOnChainString(currencyIssuance), {from: users.loanOwner});
 
-        const new_loanOwnerEthBalance = await web3.eth.getBalance(moneyUser)
-        assert.equal(0.2 * 10 ** 15, new_loanOwnerEthBalance - old_loanOwnerEthBalance)
+        const loanOwnerEthBalance_pre = await web3.eth.getBalance(users.moneyUser)
+
+        await newLoan.withdrawEth(users.moneyUser, helpers.toOnChainString(ethWithdrawal), {from: users.loanOwner});
+
+        const loanOwnerEthBalance = await web3.eth.getBalance(users.moneyUser)
+        assert.equal(helpers.toOnChainDouble(ethWithdrawal), loanOwnerEthBalance - loanOwnerEthBalance_pre)
     });
 
-    async function latestTimestamp()
-    {
-        const latestBlock = await web3.eth.getBlock('latest');
-        return parseInt(latestBlock.timestamp);
-    }
+  
+
 }); 

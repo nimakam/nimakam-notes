@@ -9,20 +9,6 @@ contract PriceFeed {
     SystemFeeds public systemFeeds;
     System public system;
 
-    uint32 constant SECONDS_PER_MINUTE = 60;
-    uint32 constant MINUTES_PER_HOUR = 60;
-    uint32 constant HOURS_PER_DAY = 24;
-    uint32 constant SECONDS_PER_DAY = SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY; // 86400
-    uint32 constant DAYS_PER_WEEK = 7;
-    uint32 constant WEEKS_PER_PERIOD = 5; // 35 days = ~1 month
-    uint32 constant PERIODS_PER_PERIOD2S = 5; // 175 days = ~0.48 years
-    uint32 constant PERIOD2S_PER_PERIOD3S = 5; // 875 days = ~2.4 years
-    uint32 constant PERIOD3S_PER_PERIOD4S = 5; // 4378 days = ~12 years
-    uint32 constant PERIOD4S_PER_PERIOD5S = 5; // 21875 days = ~60 years
-
-    uint32 constant ETH_RATE_DECIMALS = 10;
-    uint32 constant PEG_RATE_DECIMALS = 10;
-
     constructor(
         address _owner,
         address _systemAddress
@@ -40,82 +26,71 @@ contract PriceFeed {
         callTime = block.timestamp;
     }
 
-    HistoricalPrice[DAYS_PER_WEEK] public dailyHistoricalPrices;
-    struct HistoricalPrice {
-        uint256 medianEthRate;
-        uint256 medianPegRate;
+    uint32 constant SECONDS_PER_DAY = 86400; // SECONDS_PER_MINUTE * MINUTES_PER_HOUR * HOURS_PER_DAY = 60 * 60 * 24
+    uint32 constant DAYS_PER_WEEK = 7;
+    // uint32 constant WEEKS_PER_PERIOD = 5; // 35 days = ~1 month
+    // uint32 constant PERIODS_PER_PERIOD2S = 5; // 175 days = ~0.48 years
+    // uint32 constant PERIOD2S_PER_PERIOD3S = 5; // 875 days = ~2.4 years
+    // uint32 constant PERIOD3S_PER_PERIOD4S = 5; // 4378 days = ~12 years
+    // uint32 constant PERIOD4S_PER_PERIOD5S = 5; // 21875 days = ~60 years
+
+    DelayedPrice[DAYS_PER_WEEK] public delayedPrices;
+    struct DelayedPrice {
+        uint256 ethPrice;
+        uint256 pegPrice;
         uint256 priceTime;
         uint256 callTime;
     }
 
-    function postHistoricalPrice(
-        HistoricalPrice memory historicalPrice
-    )
-    public
-    {
-        emit ConsoleLog(">PriceFeed.postHistoricalPrice");
+    function reportDelayedPrices(DelayedPrice memory delayedPrice) public {
+        emit ConsoleLog(">PriceFeed.reportDelayedPrice");
         require(owner == msg.sender, "sender should be owner");
         setCallTime();
 
-        validateHistoricalPriceTiming(historicalPrice);
+        // Validate price time
+        uint32 callDay = uint32((callTime - system.firstTime()) / SECONDS_PER_DAY);
+        uint32 priceDay = uint32((delayedPrice.priceTime - system.firstTime()) / SECONDS_PER_DAY);
+        require(callDay == priceDay + 1, "price should be for exactly 1 day ago");
 
-        systemFeeds.postHistoricalPrice(historicalPrice);
+        delayedPrice.callTime = callTime; // set reported time to call time. Ignore the value set by caller.
+        systemFeeds.reportDelayedPrices(delayedPrice);
     }
 
-    function validateHistoricalPriceTiming(HistoricalPrice memory historicalPrice) private view
-    {
-        historicalPrice.callTime = callTime; // set reported time to call time even if it's not properly set
-
-        uint32 call_daysSinceSystemStart = uint32((callTime - system.firstTime()) / SECONDS_PER_DAY);
-        uint32 price_daysSinceSystemStart = uint32((historicalPrice.priceTime - system.firstTime()) / SECONDS_PER_DAY);
-        require(call_daysSinceSystemStart == price_daysSinceSystemStart + 1, "price should be for 1 day ago");
-
-        // uint32 price_dayOfSystemWeek = (price_daysSinceSystemStart) % DAYS_PER_WEEK;
-        // uint32 daysSincePriceLastCallTime = uint32((callTime - dailyHistoricalPrices[price_dayOfSystemWeek].callTime) / SECONDS_PER_DAY);
-        // require(daysSincePriceLastCallTime >= 7, "reported time should replace old value");
-        // dailyHistoricalPrices[price_dayOfSystemWeek] = historicalPrice; // Assign reported daily price
-    }
+    // function validateDelayedPrice(DelayedPrice memory delayedPrice) private
+    // {
+    //     uint32 callDay = uint32((callTime - system.firstTime()) / SECONDS_PER_DAY);
+    //     uint32 priceDay = uint32((delayedPrice.priceTime - system.firstTime()) / SECONDS_PER_DAY);
+    //     require(callDay == priceDay + 1, "price should be for exactly 1 day ago");
+    // }
 
     InstantPrice public instantPrice;
     struct InstantPrice {
-        uint256 medianEthRate;
-        uint256 priceTime;
+        uint256 ethPrice;
         uint256 callTime;
     }
 
-    function postInstantPrice(InstantPrice memory _instantPrice) public {
+    function reportInstantPrice(uint256 ethPrice) public {
         require(owner == msg.sender, "sender should be owner");
         setCallTime();
-        _instantPrice.callTime = callTime;
+        instantPrice.callTime = callTime;
+        instantPrice.ethPrice = ethPrice;
 
-        instantPrice = _instantPrice;
-
-        systemFeeds.postInstantPrice(_instantPrice);
+        systemFeeds.reportInstantPrice(instantPrice);
     }
 
-    uint256 public processingWeekStartTime;
-    function processTime() public
-    {
-        setCallTime();
+    // uint256 public processingWeekStartTime;
+    // function processTime() public
+    // {
+    //     setCallTime();
 
-        if (processingWeekStartTime == 0)
-        {
-            processingWeekStartTime = callTime;
-        }
+    //     if (processingWeekStartTime == 0) {
+    //         processingWeekStartTime = callTime;
+    //     }
 
-        if (callTime >= processingWeekStartTime + SECONDS_PER_DAY * DAYS_PER_WEEK)
-        {
-            processingWeekStartTime = ((callTime - system.firstTime()) / (SECONDS_PER_DAY * DAYS_PER_WEEK)) * (SECONDS_PER_DAY * DAYS_PER_WEEK) + system.firstTime();
-        }
-    }
-
-    /// @dev Used for debugging
-    uint public flippedState;
-    function flipState() public {
-        emit ConsoleLog(">SystemFeeds.flipState");
-        flippedState++;
-        // if(flippedState % 2 == 0) {
-    }
+    //     if (callTime >= processingWeekStartTime + SECONDS_PER_DAY * DAYS_PER_WEEK) {
+    //         processingWeekStartTime = ((callTime - system.firstTime()) / (SECONDS_PER_DAY * DAYS_PER_WEEK)) * (SECONDS_PER_DAY * DAYS_PER_WEEK) + system.firstTime();
+    //     }
+    // }
 
     /// @dev Used for debugging
     function add2str(address x) public pure returns (string memory str) {
@@ -157,4 +132,5 @@ contract PriceFeed {
 
     /// @dev Used for debugging
     event ConsoleLog(string message);
+    event ConsoleLogNumber(uint number);
 }

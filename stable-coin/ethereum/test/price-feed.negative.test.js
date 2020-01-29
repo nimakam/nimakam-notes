@@ -1,57 +1,32 @@
-const PeggedToken = artifacts.require("PeggedToken");
-const System = artifacts.require("System");
-const SystemFeeds = artifacts.require("SystemFeeds");
-const Loan = artifacts.require("Loan");
-const PriceFeed = artifacts.require("PriceFeed");
-const TestPriceFeedController = artifacts.require("TestPriceFeedController");
-const TOKEN_DECIMALS = 18;
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-contract('PriceFeed', accounts => {
-    const systemCreator = accounts[0];
-    const moneyUserAccount = accounts[1]; 
-    const loanOwner = accounts[2];   
-    const priceFeedOwner = accounts[3];
-
-    let system, systemFeeds;
-    let systemFirstTime;
+contract('PriceFeed.Negative', accounts => {
+    let helpers = require("./helpers.js");
+    let exceptions = require("./exceptions.js");
+    let contracts, users;
+    let defaultPriceFeed;
 
     before(async function () {
-        system = await System.deployed()        
-        systemFeeds = await SystemFeeds.deployed()        
+        contracts = await helpers.ensureContractsDeployed();
+        users = helpers.getUsers(accounts);
 
-        let firstTime = await system.firstTime.call();
-        systemFirstTime = parseInt(firstTime.toString());
-
-        await systemFeeds.createPriceFeed({from: priceFeedOwner})
-        newPriceFeedAddress1 = await systemFeeds.lastNewAddress.call()
-        await systemFeeds.createPriceFeed({from: priceFeedOwner})
-        newPriceFeedAddress2 = await systemFeeds.lastNewAddress.call()                
- 
-        const emptyAllocation = {priceFeedAddress: ZERO_ADDRESS, percentAllocation: 0, isAllocation: false }
-        const singleAllocation1 = {priceFeedAddress: newPriceFeedAddress1.toString(), percentAllocation: 100, isAllocation: true }
-        singleAllocations = [singleAllocation1, emptyAllocation, emptyAllocation, emptyAllocation, emptyAllocation]
+        let ethPrice = 200.0;
+        let pegPrice = 1.0;
+        let ethDeposit = 1.23456;
+        let currencyIssuance = helpers.roundPrice(ethDeposit * ethPrice / (helpers.LEVERAGE_THRESHOLD_PERCENT / 100));
+        
+        defaultPriceFeed = await helpers.windDownAndBootstrapSystem(contracts, users, ethDeposit, currencyIssuance, ethPrice, pegPrice);
     });    
 
     it('is not usable if not created through system', async () => {
-        const newPriceFeed = await createPriceFeed()
+        const newPriceFeed = await helpers.createPriceFeed(contracts, users)
 
         let readOwnerAddress = await newPriceFeed.owner.call()
-        assert.equal(priceFeedOwner, readOwnerAddress)
+        assert.equal(users.priceFeedOwner, readOwnerAddress)
 
-        let priceFeedStruct = await systemFeeds.priceFeedMap.call(newPriceFeed.address)
+        let priceFeedStruct = await contracts.systemFeeds.priceFeedMap.call(newPriceFeed.address)
         let isPriceFeed = priceFeedStruct.isPriceFeed
         assert.isTrue(isPriceFeed)
 
         const priceFeedSystemAddress = await newPriceFeed.system.call()
-        assert.equal(system.address, priceFeedSystemAddress)
+        assert.equal(contracts.system.address, priceFeedSystemAddress)
     });
-
-    async function createPriceFeed()
-    {
-        await systemFeeds.createPriceFeed({from: priceFeedOwner})
-        const newPriceFeedAddress = await systemFeeds.lastNewAddress.call()                
-        const newPriceFeed = await PriceFeed.at(newPriceFeedAddress)
-        return newPriceFeed;
-    }
 }); 
