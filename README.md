@@ -1,9 +1,7 @@
-# Nima's notes
+# Nima Kamoosi's notes
 
-[Trust-minimal stable-coin research proposal](stable-coin/readme.md)
+[Trust-minimal stablecoin research proposal](stablecoin/readme.md)
 
-## Links
+## Profiles
 
-[LinkedIn](https://www.linkedin.com/in/nimakamoosi/)
-
-[Twitter](https://twitter.com/nimakam)
+[LinkedIn](https://www.linkedin.com/in/nimakamoosi/) - [Twitter](https://twitter.com/nimakam)
