@@ -15,7 +15,7 @@ footer {
     width: 150px;
 }
 
-@media print, screen and (max-width: 960px) {
+@media print, screen and (min-width: 960px) {
 section {
     width: unset;
     padding-left: 200px;
