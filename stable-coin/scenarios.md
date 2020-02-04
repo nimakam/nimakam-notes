@@ -20,8 +20,7 @@
     - [system raises rates](#system-raises-rates)
     - [System lowers rates](#system-lowers-rates)
     - [System adjusts savings rate](#system-adjusts-savings-rate)
-    - [System adjusts the collateral ratio](#system-adjusts-the-collateral-ratio)
-    - [System adjusts price feed fee rate](#system-adjusts-price-feed-fee-rate)
+    - [<s>System adjusts price feed fee rate</s>](#ssystem-adjusts-price-feed-fee-rates)
   - [System variable scenarios](#system-variable-scenarios)
     - [System records rates](#system-records-rates)
     - [Calculate savings rate on request](#calculate-savings-rate-on-request)
@@ -30,7 +29,6 @@
     - [Price feed instability penalty](#price-feed-instability-penalty)
     - [Price feed dispute penalty](#price-feed-dispute-penalty)
     - [Price feed banning](#price-feed-banning)
-    - [Price feed down-voting penalty](#price-feed-down-voting-penalty)
   - [Negative scenarios](#negative-scenarios)
     - [Loan negative scenarios](#loan-negative-scenarios)
     - [Price feed negative scenarios](#price-feed-negative-scenarios)
@@ -40,7 +38,7 @@
     - [Controller accounts](#controller-accounts)
       - [External account controller](#external-account-controller)
       - [Contract controller](#contract-controller)
-    - [Down-voting price feeds from savings accounts](#down-voting-price-feeds-from-savings-accounts)
+    - [<s>Down-voting price feeds from savings accounts</s>](#sdown-voting-price-feeds-from-savings-accountss)
   - [Appendix](#appendix)
     - [Personas](#personas)
       - [Money user and holder](#money-user-and-holder)
@@ -156,11 +154,21 @@ The steps for reporting instant prices are as follows:
 
 ## Liquidation request
 
-- ToDo
+- Create a liquidator account with the system
+- Asses liquidation status of specific loans, calculate pegged currency needed
+- Transfer sufficient pegged currency tokens to the liquidator account
+- Submit a liquidation request
+  - With sufficient pegged currency to repay
+  - Specify a liquidation penalty bid (20%, 15%, 10%, 5%, 0%)
+- [Potentially] Trim the pending requests, in case:
+  - The request is superseded by an earlier one
+  - The request is superseded by one with lower penalty bid
+  - Liquidation request is shared, that is request is made on the same block as an identical but separate request
 
 ## Liquidation finalization
 
-- ToDo
+- [Potentially] Trim the pending requests that fail the threshold test on any day before the delayed liquidation process is completed.
+- Send a transaction to finalize the liquidation - This is assuming threshold test is met for duration of delayed liquidation process
 
 ## Price feed trust transitions
 
@@ -178,8 +186,6 @@ The steps for reporting instant prices are as follows:
 
 ### system raises rates
 
-- ToDo
-
 This type of adjustment is performed after a sustained period of oversupply.
 
 Upon finalization of the day's reported prices:
@@ -190,8 +196,6 @@ Upon finalization of the day's reported prices:
 - Adjust current rate based on target rate and rate from previous day
 
 ### System lowers rates
-
-- ToDo
 
 This type of adjustment is performed after a sustained period of overdemand.
 
@@ -204,8 +208,6 @@ Upon finalization of the day's reported prices:
 
 ### System adjusts savings rate
 
-- ToDo
-
 The adjustment is made based on sizes of savings pool and registered savings
 
 Upon finalization of the day's reported prices:
@@ -213,29 +215,23 @@ Upon finalization of the day's reported prices:
 - Determine a ceiling rate based on sizes of savings pool and registered savings
 - Adjust savings rate target if it exceeds the ceiling rate
 
-### System adjusts the collateral ratio
+~~### System adjusts the collateral ratio~~
 
-- ToDo
+~~this adjustment is made based on a measure of prolonged stability in the system.~~
 
-this adjustment is made based on a measure of prolonged stability in the system.
+- ~~Monitor the metric for prolonged stability~~
+- ~~Adjust collateral ratio as this measure changes in value~~
 
-- Monitor the metric for prolonged stability
-- Adjust collateral ratio as this measure changes in value
+### ~~System adjusts price feed fee rate~~
 
-### System adjusts price feed fee rate
+~~This adjustment is made based on total issuance on a logarithmic curve.~~
 
-- ToDo
-
-This adjustment is made based on total issuance on a logarithmic curve.
-
-- Monitor total issuance for increases by order of magnitude
-- Set new price feed revenue rate upon changes past threshold
+- ~~Monitor total issuance for increases by order of magnitude~~
+- ~~Set new price feed revenue rate upon changes past threshold~~
 
 ## System variable scenarios
 
 ### System records rates
-
-- ToDo
 
 Upon finalization of the day's reported prices:
 
@@ -246,6 +242,8 @@ Upon finalization of the day's reported prices:
 
 ### Calculate savings rate on request
 
+- ToDo
+
 At any time and given any start day and end day any caller can query for the savings rate:
 
 - Caller queries for savings rate
@@ -253,6 +251,8 @@ At any time and given any start day and end day any caller can query for the sav
 - System calculate the full rate by averaging above rates
 
 ### Calculate loan fee on request
+
+- ToDo
 
 At any time and given any start day and end day any caller can query for the loan fee rate:
 
@@ -276,9 +276,9 @@ The system enforces penalties on deviations from stable operations, ones designe
 
 Price feeds that fail to report delayed prices for more than a week are banned from the medium trust list, and the entirety of their revenue pool is transferred to the savings pool.
 
-### Price feed down-voting penalty
+~~### Price feed down-voting penalty~~
 
-- ToDo
+- ~~ToDo~~
 
 ## Negative scenarios
 
@@ -323,6 +323,7 @@ For example in the case of price feeds, a feed provider can choose to alternativ
 - Create the price feed contract instance using an external account, then call it directly
 - Create the loan contract instance using an external account, then call it directly
 - Create the savings account contract instance using an external account, then call it directly
+- Create the liquidator account contract instance using an external account, then call it directly
 
 #### Contract controller
 
@@ -331,10 +332,11 @@ The controller contracts would create the price feed, loan or savings account co
 - Create the price feed contract instance using a controller contract, then proxy calls through it
 - Create the loan contract instance using a controller contract, then proxy calls through it
 - Create the savings account feed contract instance using a controller contract, then proxy calls through it
+- Create the liquidator account feed contract instance using a controller contract, then proxy calls through it
 
-### Down-voting price feeds from savings accounts
+### ~~Down-voting price feeds from savings accounts~~
 
-- ToDo
+- ~~ToDo~~
 
 ## Appendix
 

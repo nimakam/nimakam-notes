@@ -2,7 +2,9 @@
 
 This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the stablecoin is pegged to the value of a widely accepted **reference currency**.
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand in the markets through adjusting monetary variables based on market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. For our *Minimum Viable Product (MVP)* implemented on *Ethereum*, the *native blockchain asset token* is **Ether (ETH)** and the *reference currency* is the **US dollar (USD)**. Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no equity or governance tokens*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** relative to comparable solutions. We describe concepts, inter-actors, components and functionality of the system as at high level and in detail. A proof of concept implementation of this idea, written in Solidity for Ethereum, is also available.
+A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand in the markets through adjusting monetary variables based on market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. For our *Minimum Viable Product (MVP)* implemented on *Ethereum*, the *native blockchain asset token* is **Ether (ETH)** and the *reference currency* is the **US dollar ($USD)**.
+
+Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no equity or governance tokens*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** relative to comparable solutions. We describe new concepts, inter-actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also available.
 
 Other sections outline:
 
@@ -10,10 +12,12 @@ Other sections outline:
 - [The product](./product.md)
 - [The ecosystem](./ecosystem.md)
 - [Security](./security.md)
+- [Scenarios](./scenarios.md)
+- [Roadmaps](./roadmaps.md)
 
 This section outline:
 
-- [Actors](#actors)
+- [System inter-actors](#system-inter-actors)
 - [Tokens and currencies](#tokens-and-currencies)
   - [Pegged currency money](#pegged-currency-money)
   - [Reference currency](#reference-currency)
@@ -29,8 +33,6 @@ This section outline:
   - [Instant price reporting process](#instant-price-reporting-process)
   - [Price feed revenue pool](#price-feed-revenue-pool)
   - [Price feed delay and time resolution considerations](#price-feed-delay-and-time-resolution-considerations)
-  - [Dispute process](#dispute-process)
-  - [Price feed aggregation penalties](#price-feed-aggregation-penalties)
 - [Savings account](#savings-account)
   - [Savings rate](#savings-rate)
   - [Savings pool](#savings-pool)
@@ -47,18 +49,19 @@ This section outline:
 - [Appendix](#appendix)
   - [Terms](#terms)
   - [Magic values](#magic-values)
-  - [Front running resistance](#front-running-resistance)
+  - [Open ideas](#open-ideas)
+    - [Immutable price feeds](#immutable-price-feeds)
   - [Volatility](#volatility)
     - [Note on volatility of Ether](#note-on-volatility-of-ether)
   - [Versioning - in case of emergency (hard-forks)](#versioning---in-case-of-emergency-hard-forks)
   - [Decentralized price feed](#decentralized-price-feed)
 
-## Actors
+## System inter-actors
 
-- **Money users** - These are *regular consumers* that *use*, or *store* the pegged currency money in their blockchain-based *savings account*. The major target groups that could most benefit from such an offering are *the un-banked* and those with limited access to a *stable Store of Value* (SoV) from countries with dysfunctional monetary policies. This could also be used by the *early adopter community* of a public blockchain.
+- **Money users** - These are *regular consumers* that *use*, or *store* the pegged currency money in their blockchain-based *savings account*. The notable target groups that could most benefit from such an offering are *the un-banked* and those with limited access to a *stable Store of Value* (SoV) from countries with dysfunctional monetary policies. This could also be used by the *early adopter community* of a public blockchain.
 - **Loan takers** - Most commonly, existing *native token holders* who have decided to *take a loan* against their holdings. The main incentive for this group consists of being *long native token*, while being able to *deploy its value* in other profitable transactions. They may also initially be *motivated by the technology* itself, however this is not a long-term sustainable incentive.
-- **Price feed providers** - Providers of accurate rates of exchange between native token, the reference asset as well as the pegged currency. These providers are expected to compete in establishing trust amongst the loan takers, and in return to be monetarily compensated based on the level of trust they establish, and based on following the algorithmic rules set by the loan system.
-- **Loan liquidators** - Liquidators *compete* with each other to monitor, speculate on the liquidation status of loans (debt positions), and *trigger liquidation* when they foresee valid *liquidation conditions* in accordance with the loan system's algorithmic definition.
+- **Price feed providers** - maintain the system by *providing accurate rates* of exchange between naive currency (ie ETH), the reference currency (ie USD) as well as the pegged currency. These providers are expected to compete in *establishing trust* amongst the loan takers, and in return be *monetarily compensated* based on trust level, as well as *avoiding penalties* by adhering to the loan system rules.
+- **Loan liquidators** - maintain the system while *competing* with each other to *liquidate* undercollateralized loans. They monitor loans and trigger liquidation while *speculating* on the future collateralization levels of target loans as judged by the system.
 
 ## Tokens and currencies
 
@@ -66,7 +69,7 @@ The system supports pegging to any relatively stable real world currency, as wel
 
 ### Pegged currency money
 
-The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, should already be (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US dollar ($).
+The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, should already be (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US dollar ($USD).
 
 The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of such functionality is described by the official [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md)(also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/)). Additional functionality should be implemented to respectively **mint** or **burn** tokens upon the pegged currency's **issuance** or **return**.
 
@@ -95,12 +98,13 @@ The \{\{PegLoan\}\} stablecoin system consists of the following major components
   - Loans functional area
   - Savings functional area
   - Price feeds functional area
+  - Liquidation functional area
 - Loans
 - Savings accounts
 - Price feeds
 - Liquidation accounts
 
-We will discuss 
+As part of this proposal, we will discuss in detail the functionality of each component as well as how end-to-end scenarios function.
 
 ## Loans
 
@@ -170,15 +174,17 @@ Price feed allocation process should be a separate call to the loan contract, in
 
 Liquidation can be proposed by any blockchain user, who agrees to put up a deposit in pegged currency, equivalent to the outstanding issuance. However the final liquidation decision would be made by the system, only if the specific monetary conditions of the position merit it over a period of `7 days` (where the system is not in `Dispute` state). The decision for each given day is made through comparing a leverage threshold rate with the following calculated leverage ratio: `Loan leverage ratio` = `100%` x `native token deposited` x `native token price` / `total pegged currency issuance`
 
-For liquidation to occur, the liquidation conditions must be met over all of the `7 days` mentioned above. If even one day's aggregate system price invalidates liquidation conditions, the liquidation request will not be finalized.
+For liquidation to occur, the liquidation conditions must be met over all of the `7 days` mentioned above. If even one day's aggregate system price invalidates liquidation conditions, the liquidation request will not be finalized. Partial liquidations are not allowed. Adjustments to pegged currency deposits are not allowed to be made at any time after request is submitted.
 
-There is a `10%` reward paid in native token, where the reward is calculated in pegged currency based on the pegged currency being returned, and the amount of native token is calculated based on the native token price on the day of liquidation request.
+- **Common liquidation conditions** - Liquidator agrees to deposit pegged currency sufficient for paying off the loan issuance, as well as any outstanding fees in pegged currency. In this case the liquidator agrees to pay a deposit calculated as follows: `liquidator deposit` = `loan total issuance` x (`100%` + `reward bid percentage`) + `outstanding fees`. Upon successful finalization of the liquidation request, the liquidator would receive a payment in native token calculated as follows: `liquidation payment` = (`outstanding fees` + `loan total issuance` x `reward bid percentage`) / `native token price on liquidation day`. The loan owner will have control over any remaining native token stored in the loan contract. Upon failed finalization the liquidator is returned the whole deposit.
 
-Partial liquidations are allowed.
-
-Adjustments to pegged currency deposits are allowed to be made until the request day's delayed prices are finalized.
+- **Undercollateralized liquidation conditions** - There is a special case, where a loan collateralization is already under the critical `100%` threshold where pegged currency issuance value exceeds value of native token collateral. In such a case, the system will accept a liquidation deposit calculated as follows: `liquidator deposit` = `native token collateral` x `native token price on liquidation day` x (`100%` + `reward bid percentage`) + `outstanding fees`. Upon successful finalization, the liquidator receives the loan's entire backing in native token: `liquidation payment` = `native token collateral`. There will therefore be a non-zero leak of pegged currency due the bad loan.
 
 **Prolonged dispute state liquidation** - If the system hasn't had `7 days` outside `Dispute` state within a maximum of `35 days` liquidation time limit since liquidation request, the system decides liquidation conditions based on the loan's original allocation. A `100%` allocation to one price feed will mean that liquidation decision will be solely made based on the price feed's latest price. A combination of say `3` price feeds with `33%`, `33%`, `34%` each will mean that liquidation condition will trigger if average of the feeds' latest prices warrants liquidation.
+
+**Liquidation reward/penalty** - In order to incentivize timely liquidation, there needs to be a non-zero reward for liquidator to compete over. This reward is essentially a penalty that the owner of an undercollateralized loan, or the system as a whole would pay. As a result, we would also generally like competition for liquidations to push down the reward/penalty reducing the cost to an important stakeholder.
+
+As a part of the liquidation request, the liquidator will send a bid for the reward they would be entitled to upon liquidation completion. The bid should be selected from the following values: `20%`, `15%`, `10%`, `5%`, `0%`. Lower bids supersede higher bids if made in the same system-defined day. Bids of equal value are then compared with respect to the request block time, where earlier bids supersede later ones. Equal bids of the same block time, are processed as described in the next section.
 
 **Front-running resistance** - The system processes requests grouped and sorted by the timestamp under which the request has been submitted. The earliest timestamped group of requests are processed together for finalization, and if successful, are assigned a fraction of the liquidation process, in order of their deposit size, that is minimum of `100%` x `currency deposit` / `currency issuance` and `100%` / `number of remaining concurrent liquidation requests`
 
@@ -190,8 +196,8 @@ The main responsibility of price feed providers is the truthful **daily and dela
 
 The price feed providers are responsible for reporting the designated median prices (by volume) daily, and have until the end of the next day to report. Every day, after gathering data and confirming the market activities of the previous day, and reporting the median prices for the following:
 
-1. Daily median by volume rate of ETH in reference currency (ie US dollar $) - eg. $200.00 per ETH
-2. Daily median by volume rate of pegged currency (ie Pegged US dollar) in reference currency  - eg $1.01 per pegged US Dollar
+1. Daily median by volume rate of ETH in reference currency (ie US dollar $USD) - eg. $200.00 per ETH
+2. Daily median by volume rate of pegged currency (ie Pegged US dollar) in reference currency  - eg $1.01 per pegged US dollar
 3. Day start time corresponding to blockchain time unit (time in seconds since unix epoch)
 
 The time granularity of tracking feeds' historical prices is 1 day. This means all prices are reported as the median value for that whole day by volume, according to the system contract's definition of that day's start and end times.
@@ -211,7 +217,7 @@ High trust providers are also expected to report something called **instant pric
 
 The price feed providers, that are in the trusted category, are responsible for reporting significant changes to the price of ETH in reference currency, within a minute of occurring. Significant changes are defined as any rise or drop of more than 5% since a previous report. Reporting changes of over 1% are recommended. The provider should monitor the latest median price by volume and upon a fall or rise of its value, send a on-chain request to their price contract with the value of:
 
-1. Up to the minute median by volume rate of ETH in reference currency (ie US dollar $) - eg. $199.80 per ETH.
+1. Up to the minute median by volume rate of ETH in reference currency (ie US dollar $USD) - eg. $199.80 per ETH.
 2. Price time corresponding to blockchain time unit (time in seconds since unix epoch)
 
 ### Price feed revenue pool
@@ -231,14 +237,6 @@ We have selected a specific price feed delay and time resolution of `1 day` as a
 1. **Market conditions** - The level of demand based on competitive differences in the price feed market, determines the characteristics the system demands price feed. At one extreme, for example in the long term trading space, the market's demands may not exceed resolution and delay of `5 days`. At another extreme, such as for stock trading, the market may demand instantaneous (or in the order of `1 milliseconds`), in order to enable almost instantaneous transaction confirmation.
 2. **Cost of reducing delay** - This is the cost of reducing price reporting delays on the blockchain, and is driven mainly by gas cost. At one extreme the provider may choose to record values `1x / day` with minimum gas cost (commonly `<1$`), or at the other extreme they may incur that gas cost on almost every block for instantaneous records.
 3. **Cost of high resolution** - This is the cost of providing high resolution records, which is driven mainly by storage cost. At one extreme, the provider may choose to record prices every `5 days`, minimizing storage cost. At another extreme, the provider may choose to provide up to the block price records despite significant storage cost.
-
-### Dispute process
-
-- ToDo
-
-### Price feed aggregation penalties
-
-- ToDo
 
 ## Savings account
 
@@ -284,7 +282,7 @@ The system has two operational areas, the major one relies on **delayed price re
   ~~2. drastic recent changes in allocations such as `10%` drops~~
   ~~3. Volatility of reported prices exceeding `20% weekly` despite lack of dispute.~~
   - Currency issuance will be instant within transaction, up to a limit of `0.5%` total issuance.
-  - Loan liquidation will take `1 week` and will be evaluated against the maximum of historical native token prices
+  - Loan liquidation will take `1 week` and will be evaluated against all historical native token prices of that week
 - **Dispute**: where major disagreement is occurring between medium trust providers
   - Currency issuance will be disabled
   - Loan liquidation will be postponed for the duration of dispute state
@@ -411,7 +409,7 @@ The most acceptable cases of liquidation from the perspective of a loan taker ha
 One of the key insights that helps with efficiency and simplicity of this on-chain loan system is that using a collateral in smart contract to peg relatively stable currencies, does not require a high level of time sensitivity, in the following ways:
 
 - **Liquidation process delay** - Given the intent and requirements from loan takers as well as loan liquidators, the liquidation triggering or the dispute process do not necessarily have to occur in real time, and can be delayed, even lasting for days, as long as they occur in a predictable manner.
-- **Low time resolution** - One does not require a perfectly full resolution set of prices, in order to confirm a persistent drop in prices over a long period of time. The only case where higher resolution helps is determining the liquidation bid winner, as the first actor that submits a liquidation request right before passing solvency threshold. (ToDo - mitigate against the risk of collusion to win liquidation by manipulating price feed)
+- **Low time resolution** - One does not require a perfectly full resolution set of prices, in order to confirm a persistent drop in prices over a long period of time. The only case where higher resolution helps is determining the liquidation bid winner, as the first actor that submits a liquidation request right before passing solvency threshold.
 
 ## Price feed penalties
 
@@ -432,7 +430,7 @@ All percent-based (%) penalties are enforced with respect to the corresponding p
 
 Gold, Bitcoin (BTC) and Ether (ETH) are all examples of asset moneys, that can be used for exchange on occasion, but are not necessarily the best option when we have access to more widely accepted alternatives like USD.
 
-**Currency** - A type of money that is commonly used in day to day commerce, as it is used and accepted by many buyers and merchants. Good currencies are stable in value and are therefore good Stores of Value (SoV). Good currencies also are used as Units of Account (UoA) by more people, and are accepted by more people as Medium of Exchange (MoE). US Dollars ($) is the example of a good currency money, so are Chinese Yuan, Japanese Yen, and Euro.
+**Currency** - A type of money that is commonly used in day to day commerce, as it is used and accepted by many buyers and merchants. Good currencies are stable in value and are therefore good Stores of Value (SoV). Good currencies also are used as Units of Account (UoA) by more people, and are accepted by more people as Medium of Exchange (MoE). US dollars ($USD) is the example of a good currency money, so are Chinese Yuan, Japanese Yen, and Euro.
 
 **Token** - The digital representation of value on a public blockchain. They can be the digital representation of a real world asset, or they can have inherent digital value like in the case of Bitcoin, Ether and others.
 
@@ -454,11 +452,17 @@ In software engineering, magic values refer to constant values selected by the s
 
 **Medium trust price feed count** - `25` - Every feed with at least `4%` is guaranteed to be included.
 
-### Front running resistance
+### Open ideas
 
-Performing liquidations asynchronously and through and request initialization and finalization process, and providing aan initial grace window of a few blocks, ensures that no one can front-run another request and prevent them from participating also. At worst case, the two almost-simultaneous requests will share in the proceeds.
+Here we list ideas that can benefit the system but may not be in scope fot he system itself
 
-Also anonymizing liquidation requests, ensures that no front-runners can highjack the reputation of another liquidator, and requires them to also have their own logic for evaluating the liquidation conditions, at which point it no longer is much of a front running attempt anyways.
+#### Immutable price feeds
+
+A few of the price feeds used in the system can obtain their price values from on-chain sources, including the existing Decentralized Exchange (DEX) instances such as Ethereum's UniSwap, which announced that their V2 version would provide APIs for obtaining the latest price for a given token market.
+
+The native token price can be obtained by aggregating price information for native token traded against other known stablecoins be they corporate, government based, or algorithmic. The peg price would be obtained from the price of pegged currency traded on DEXes.
+
+The price reporting actions would need to be triggered by anonymous callers, who may be rewarded by the price feed contract for their gas cost, plus a relatively small reward. The excess price feed revenue would also be transferred back into the main system contract under the savings pool.
 
 ### Volatility
 

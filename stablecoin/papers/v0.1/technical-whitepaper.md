@@ -23,7 +23,7 @@ The system supports pegging to any relatively stable real world currency, as wel
 
 ### Pegged currency money
 
-The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, should already be (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US Dollar ($).
+The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, should already be (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US dollar ($USD).
 
 The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of this functionality is described by the [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/);
 
@@ -241,7 +241,7 @@ All percent-based (%) penalties are enforced with respect to the corresponding p
 
 Gold, Bitcoin (BTC) and Ether (ETH) are all examples of asset moneys, that can be used for exchange on occasion, but are not necessarily the best option when we have access to more widely accepted alternatives like USD.
 
-**Currency** - A type of money that is commonly used in day to day commerce, as it is used and accepted by many buyers and merchants. Good currencies are stable in value and are therefore good Stores of Value (SoV). Good currencies also are used as Units of Account (UoA) by more people, and are accepted by more people as Medium of Exchange (MoE). US Dollars ($) is the example of a good currency money, so are Chinese Yuan, Japanese Yen, and Euro.
+**Currency** - A type of money that is commonly used in day to day commerce, as it is used and accepted by many buyers and merchants. Good currencies are stable in value and are therefore good Stores of Value (SoV). Good currencies also are used as Units of Account (UoA) by more people, and are accepted by more people as Medium of Exchange (MoE). US dollars ($USD) is the example of a good currency money, so are Chinese Yuan, Japanese Yen, and Euro.
 
 **Token** - The digital representation of value on a public blockchain. They can be the digital representation of a real world asset, or they can have inherent digital value like in the case of Bitcoin, Ether and others.
 

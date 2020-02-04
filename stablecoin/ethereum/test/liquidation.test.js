@@ -27,7 +27,8 @@ contract('LiquidatorAccount', accounts => {
         let readLiquidatorAccountAddress = await newLiquidatorAccount.owner.call()
         assert.equal(users.liquidatorAccountOwner, readLiquidatorAccountAddress)
 
-        let isLiquidatorAccount = await contracts.systemLiquidations.liquidatorAccountMap.call(newLiquidatorAccount.address)
+        let liquidatorAccountState = await contracts.systemLiquidations.liquidatorAccountMap.call(newLiquidatorAccount.address)
+        let isLiquidatorAccount = liquidatorAccountState.isLiquidatorAccount;
         assert.isTrue(isLiquidatorAccount)
 
         const loanSystemLiquidationsAddress = await newLiquidatorAccount.systemLiquidations.call()
@@ -47,7 +48,8 @@ contract('LiquidatorAccount', accounts => {
         let readLiquidatorAccountAddress = await testLiquidatorAccountController.liquidatorAccount.call()
         let newLiquidatorAccount = await helpers.LiquidatorAccount.at(readLiquidatorAccountAddress)
 
-        let isLiquidatorAccount = await contracts.systemLiquidations.liquidatorAccountMap.call(newLiquidatorAccount.address)
+        let liquidatorAccountState = await contracts.systemLiquidations.liquidatorAccountMap.call(newLiquidatorAccount.address)
+        let isLiquidatorAccount = liquidatorAccountState.isLiquidatorAccount;
         assert.isTrue(isLiquidatorAccount)
 
         const liquidatorAccountSystemAddress = await newLiquidatorAccount.system.call()

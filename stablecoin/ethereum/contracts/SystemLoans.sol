@@ -164,6 +164,14 @@ contract SystemLoans {
         require(loanMap[msg.sender], "sender should be valid loan contract");
     }
 
+    function isLoan(address loanAddress) public returns (bool) {
+        return loanMap[loanAddress];
+    }
+
+    function getRequiredDepositCurrency(address loanAddress) public returns (uint256) {
+        return 0;
+    }
+
     function payLoanFee(uint256 _feeValue, Loan.PriceFeedAllocation[LOAN_MAX_ALLOCATIONS] memory _priceFeedAllocations, uint256 _feedRevenue) public {
         require(loanMap[msg.sender], "sender should be valid loan contract");
 

@@ -86,6 +86,12 @@ contract LiquidatorAccount {
         registeredCurrency -= _unregisterValue;
     }
 
+    function requestLiquidation(address _loanAddress, uint256 _depositCurrency) public {
+        require(owner == msg.sender, "sender should be owner");
+
+        systemLiquidations.requestLiquidation(_loanAddress, _depositCurrency);
+    }
+
     uint256 public callTime;
     function setCallTime() private
     {

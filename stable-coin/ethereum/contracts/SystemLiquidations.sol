@@ -27,19 +27,41 @@ contract SystemLiquidations {
     uint256 constant public PRICE_DECIMALS = 18;
 
     address public lastNewAddress;
-    mapping (address => bool) public liquidatorAccountMap;
+    mapping (address => LiquidatorAccountState) public liquidatorAccountMap;
+    struct LiquidatorAccountState {
+        bool isLiquidatorAccount;
+        uint256 registeredCurrency;
+    }
 
     function createLiquidatorAccount() public returns(address) {
         LiquidatorAccount newLiquidatorAccount = new LiquidatorAccount(msg.sender, address(system), address(peggedToken));
         lastNewAddress = address(newLiquidatorAccount);
-        liquidatorAccountMap[lastNewAddress] = true;
+        liquidatorAccountMap[lastNewAddress].isLiquidatorAccount = true;
         return lastNewAddress;
     }
 
     event ConsoleLog(string message);
     event ConsoleLogNumber(uint number);
 
+    uint256 public totalRegisteredCurrency;
+
     function changeRegisteredCurrency(uint256 _currentRegistration, uint256 _newRegistration, bool isUnregister) public {
+        require(liquidatorAccountMap[msg.sender].isLiquidatorAccount, "caller address should be a valid liquidator account");
+        require(liquidatorAccountMap[msg.sender].registeredCurrency == _currentRegistration, "registered currency should be same on state map");
+        require(totalRegisteredCurrency > _currentRegistration, "total registered currency should above a single liquidator account");
+
+        liquidatorAccountMap[msg.sender].registeredCurrency -= _currentRegistration;
+        liquidatorAccountMap[msg.sender].registeredCurrency += _newRegistration;
+        totalRegisteredCurrency -= _currentRegistration;
+        totalRegisteredCurrency += _newRegistration;
+    }
+
+    function requestLiquidation(address _loanAddress, uint256 _depositCurrency) public {
+        require(liquidatorAccountMap[msg.sender].isLiquidatorAccount, "caller address should be a valid liquidator account");
+        require(systemLoans.isLoan(_loanAddress), "_loanAddress should be a valid system loan");
+
+        uint256 requiredDepositCurrency = systemLoans.getRequiredDepositCurrency(_loanAddress);
+        require(requiredDepositCurrency <= _depositCurrency, "deposit currency should be sufficient to liquidate");
 
     }
 }

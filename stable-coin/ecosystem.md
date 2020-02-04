@@ -127,7 +127,6 @@ Given that the system is immutable and holds a large amount of state, in the for
 - **Loan takers' exchange costs** -
 - **Price feed provider penalties** - the cost of exiting price feed providers being penalized for the drops in their allocation numbers, as well as losses of time based payouts.
 - **Possibility of un-closable loans due to lost pegged currency** -
-- ToDo - others ...
 
 ## Community
 
