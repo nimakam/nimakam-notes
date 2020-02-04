@@ -2,10 +2,6 @@
 
 This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the stablecoin is pegged to the value of a widely accepted **reference currency**.
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand in the markets through adjusting monetary variables based on market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. For our *Minimum Viable Product (MVP)* implemented on *Ethereum*, the *native blockchain asset token* is **Ether (ETH)** and the *reference currency* is the **US dollar ($USD)**.
-
-Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no equity or governance tokens*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** relative to comparable solutions. We describe new concepts, inter-actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also available.
-
 Other sections outline:
 
 - [Vision](./vision.md)
@@ -17,6 +13,7 @@ Other sections outline:
 
 This section outline:
 
+- [System basics](#system-basics)
 - [System inter-actors](#system-inter-actors)
 - [Tokens and currencies](#tokens-and-currencies)
   - [Pegged currency money](#pegged-currency-money)
@@ -51,11 +48,17 @@ This section outline:
   - [Magic values](#magic-values)
   - [Open ideas](#open-ideas)
     - [Immutable price feeds](#immutable-price-feeds)
-    - [Closed ideas](#closed-ideas)
+    - [[Closed] Consider design from Serenus](#closed-consider-design-from-serenus)
   - [Volatility](#volatility)
     - [Note on volatility of Ether](#note-on-volatility-of-ether)
   - [Versioning - for (emergency) hard-forks](#versioning---for-emergency-hard-forks)
   - [Decentralized price feed](#decentralized-price-feed)
+
+## System basics
+
+A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand in the markets through adjusting monetary variables based on market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. For our *Minimum Viable Product (MVP)* implemented on *Ethereum*, the *native blockchain asset token* is **Ether (ETH)** and the *reference currency* is the **US dollar ($USD)**.
+
+Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no equity or governance tokens*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** relative to comparable solutions. We describe new concepts, inter-actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also available.
 
 ## System inter-actors
 
@@ -465,9 +468,19 @@ The native token price can be obtained by aggregating price information for nati
 
 The price reporting actions would need to be triggered by anonymous callers, who may be rewarded by the price feed contract for their gas cost, plus a relatively small reward. The excess price feed revenue would also be transferred back into the main system contract under the savings pool.
 
-#### Closed ideas
+#### [Closed] Consider design from Serenus
 
-Consider
+Thanks to Tom Howard for pointing to [Serenus](https://serenuscoin.com/).
+
+Innovative monetary system, however the "loan" aspect of our system (and MakerDAO's system) has advantages for our target loan taker audience that are difficult to overcome:
+
+1. Consistent ownership of the collateral
+2. Psychological safety
+3. Intuitive model comparable to loan
+4. Minimal tax events
+
+The Serenus model on the supply side would best fit a finance professional persona, one that has more comfort with complex financial instruments.
+As opposed to Maker/PegLoan persona that can be an intermediate DeFi user going in with their own ETH.
 
 ### Volatility
 
