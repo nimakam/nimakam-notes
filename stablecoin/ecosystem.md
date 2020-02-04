@@ -1,11 +1,34 @@
-# Ecosystem
+# Ecosystem <!-- omit in toc -->
 
 The stablecoin system lives on the public blockchain, however the players interacting with it directly or indirectly, all live in the real world and will follow strategies and courses of action, based on their incentives and the changing ecosystem. In order to ensure the success of the stablecoin system, and the money product that it represents, we need to fully understand the ecosystem subsuming it and mitigate any foreseeable issues that may threaten the product's success.
+
+Other sections outline:
 
 - [Vision](./vision.md)
 - [The product](./product.md)
 - [The system](./system.md)
 - [Security](./security.md)
+- [Scenarios](./scenarios.md)
+- [Roadmaps](./roadmaps.md)
+
+This section outline:
+
+- [Actors](#actors)
+  - [Money user](#money-user)
+  - [Loan taker](#loan-taker)
+  - [Price feed provider](#price-feed-provider)
+    - [Foundation price feed provider](#foundation-price-feed-provider)
+  - [Loan liquidator](#loan-liquidator)
+  - [Currency market arbitragers](#currency-market-arbitragers)
+  - [Payment network integrators](#payment-network-integrators)
+  - [Loan taking aggregators](#loan-taking-aggregators)
+- [Game theory](#game-theory)
+  - [Strategic dynamic changes](#strategic-dynamic-changes)
+  - [Protocol changes](#protocol-changes)
+    - [Perpetual operation (no-fork)](#perpetual-operation-no-fork)
+    - [Soft-fork](#soft-fork)
+    - [Hard-fork](#hard-fork)
+- [Community](#community)
 
 ## Actors
 

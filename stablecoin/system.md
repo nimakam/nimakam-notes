@@ -51,9 +51,10 @@ This section outline:
   - [Magic values](#magic-values)
   - [Open ideas](#open-ideas)
     - [Immutable price feeds](#immutable-price-feeds)
+    - [Closed ideas](#closed-ideas)
   - [Volatility](#volatility)
     - [Note on volatility of Ether](#note-on-volatility-of-ether)
-  - [Versioning - in case of emergency (hard-forks)](#versioning---in-case-of-emergency-hard-forks)
+  - [Versioning - for (emergency) hard-forks](#versioning---for-emergency-hard-forks)
   - [Decentralized price feed](#decentralized-price-feed)
 
 ## System inter-actors
@@ -99,10 +100,10 @@ The \{\{PegLoan\}\} stablecoin system consists of the following major components
   - Savings functional area
   - Price feeds functional area
   - Liquidation functional area
-- Loans
+- Loan accounts
 - Savings accounts
-- Price feeds
-- Liquidation accounts
+- Price feed accounts
+- Liquidator accounts
 
 As part of this proposal, we will discuss in detail the functionality of each component as well as how end-to-end scenarios function.
 
@@ -176,9 +177,9 @@ Liquidation can be proposed by any blockchain user, who agrees to put up a depos
 
 For liquidation to occur, the liquidation conditions must be met over all of the `7 days` mentioned above. If even one day's aggregate system price invalidates liquidation conditions, the liquidation request will not be finalized. Partial liquidations are not allowed. Adjustments to pegged currency deposits are not allowed to be made at any time after request is submitted.
 
-- **Common liquidation conditions** - Liquidator agrees to deposit pegged currency sufficient for paying off the loan issuance, as well as any outstanding fees in pegged currency. In this case the liquidator agrees to pay a deposit calculated as follows: `liquidator deposit` = `loan total issuance` x (`100%` + `reward bid percentage`) + `outstanding fees`. Upon successful finalization of the liquidation request, the liquidator would receive a payment in native token calculated as follows: `liquidation payment` = (`outstanding fees` + `loan total issuance` x `reward bid percentage`) / `native token price on liquidation day`. The loan owner will have control over any remaining native token stored in the loan contract. Upon failed finalization the liquidator is returned the whole deposit.
+**Common liquidation conditions** - Liquidator agrees to deposit pegged currency sufficient for paying off the loan issuance, as well as any outstanding fees in pegged currency. In this case the liquidator agrees to pay a deposit calculated as follows: `liquidator deposit` = `loan total issuance` x (`100%` + `reward bid percentage`) + `outstanding fees`. Upon successful finalization of the liquidation request, the liquidator would receive a payment in native token calculated as follows: `liquidation payment` = (`outstanding fees` + `loan total issuance` x `reward bid percentage`) / `native token price on liquidation day`. The loan owner will have control over any remaining native token stored in the loan contract. Upon failed finalization the liquidator is returned the whole deposit.
 
-- **Undercollateralized liquidation conditions** - There is a special case, where a loan collateralization is already under the critical `100%` threshold where pegged currency issuance value exceeds value of native token collateral. In such a case, the system will accept a liquidation deposit calculated as follows: `liquidator deposit` = `native token collateral` x `native token price on liquidation day` x (`100%` + `reward bid percentage`) + `outstanding fees`. Upon successful finalization, the liquidator receives the loan's entire backing in native token: `liquidation payment` = `native token collateral`. There will therefore be a non-zero leak of pegged currency due the bad loan.
+**Undercollateralized liquidation conditions** - There is a special case, where a loan collateralization is already under the critical `100%` threshold where pegged currency issuance value exceeds value of native token collateral. In such a case, the system will accept a liquidation deposit calculated as follows: `liquidator deposit` = `native token collateral` x `native token price on liquidation day` x (`100%` + `reward bid percentage`) + `outstanding fees`. Upon successful finalization, the liquidator receives the loan's entire backing in native token: `liquidation payment` = `native token collateral`. There will therefore be a non-zero leak of pegged currency due the bad loan.
 
 **Prolonged dispute state liquidation** - If the system hasn't had `7 days` outside `Dispute` state within a maximum of `35 days` liquidation time limit since liquidation request, the system decides liquidation conditions based on the loan's original allocation. A `100%` allocation to one price feed will mean that liquidation decision will be solely made based on the price feed's latest price. A combination of say `3` price feeds with `33%`, `33%`, `34%` each will mean that liquidation condition will trigger if average of the feeds' latest prices warrants liquidation.
 
@@ -320,8 +321,8 @@ The aggregate delayed price is calculated each time the daily delayed prices are
 - If the range of prices exceeds `5%` state is set to `Unstable` and instant loan limit rate is set to `0.5%`.
 - Otherwise the sub-system is in `Stable` state.
 - The finalized delayed price is set to the average of all remaining up to `13` reported prices, weighted by each feed's total allocation.
-- If in `Dispute` state, all price feeds pay a dispute penalty calculated by the formula: `Feed dispute penalty rate` = `100%` x |`Feed price` - `Aggregate price`| / `Aggregate price` / `2`
-- If in `Unstable` state, all price feeds pay a dispute penalty calculated by the formula: `Feed instability penalty rate` = `100%` x |`Feed price` - `Aggregate price`| / `Aggregate price` / `7`
+- If in `Dispute` state, all price feeds pay a dispute penalty calculated by the formula: `Feed dispute penalty rate` = `100%` x abs(`Feed price` - `Aggregate price`) / `Aggregate price` / `2`
+- If in `Unstable` state, all price feeds pay a dispute penalty calculated by the formula: `Feed instability penalty rate` = `100%` x abs(`Feed price` - `Aggregate price`) / `Aggregate price` / `7`
 
 ### Instant price aggregation process
 
@@ -344,7 +345,7 @@ The main goal of the automated monetary system is to balance supply of pegged cu
 - Savings interest rate
 - Loan collateral threshold ratio
 
-**Peg equilibrium metric** - is a measure of how stable the peg is relative to the desired `1.00000` rate, and determines the level of market's stability, overdemand, or oversupply. The metric is calculated as follows: `Peg equilibrium metric` = (`+` or `-`) Σ |`Peg price` - `1.00`|, where the sum is taken for the days in a row that the peg has been above or below `1.00`, and where `+` denotes being above, and `-` denotes being below `1.00`.
+**Peg equilibrium metric** - is a measure of how stable the peg is relative to the desired `1.00000` rate, and determines the level of market's stability, overdemand, or oversupply. The metric is calculated as follows: `Peg equilibrium metric` = (`+` or `-`) Σ abs(`Peg price` - `1.00`), where the sum is taken for the days in a row that the peg has been above or below `1.00`, and where `+` denotes being above, and `-` denotes being below `1.00`.
 
 **Loan fee rate** - Is a yearly rate set by the automated monetary system that determines the fee paid by loan takers upon structural changes made to their loan, such as allocation or issuance changes. For example, at a given point in time, the loan fee rate could be `4%` per year (equivalent to `0.01096%` per day). Assuming no future change to the rate (which is unlikely), the loan taker should project to pay `$400` per year in fees on a loan that has issued `$10,000` worth of pegged currency, upon closing the loan. The actual annual rate will be calculated by adding all the variable daily rates.
 
@@ -464,6 +465,10 @@ The native token price can be obtained by aggregating price information for nati
 
 The price reporting actions would need to be triggered by anonymous callers, who may be rewarded by the price feed contract for their gas cost, plus a relatively small reward. The excess price feed revenue would also be transferred back into the main system contract under the savings pool.
 
+#### Closed ideas
+
+Consider
+
 ### Volatility
 
 Historically, stable currencies have not shown a high level of short term volatility, where for example the price goes down 20% one day and goes back up a few minutes or hours. As such transaction delays have a much smaller chance of triggering costs to a stakeholder. There is often however clear longer term trends that can be observed with stable currency, at different points in time.
@@ -474,7 +479,7 @@ However one always needs to be prepared for short term volatility of the native 
 
 Since Ether (ETH) is the other side of the first viable product based on our proposed financial instrument, its volatility also affects our considerations. ETH in the recent years, due to its increasing uses as gas, speculative investment, and collateral, has been relatively more stable as compared to years before. Also due to its future staking use in Ethereum 2.0, we expect its long term volatility to decrease in general. However, it remains primarily a speculative asset subject to significant volatility.
 
-### Versioning - in case of emergency (hard-forks)
+### Versioning - for (emergency) hard-forks
 
 The ultimate goal of such a decentralized smart contract system is to be ownerless and live forever. That is, if the current open source implementation were the solution to our original stablecoin problem, there should be no subsequent version needed.
 
