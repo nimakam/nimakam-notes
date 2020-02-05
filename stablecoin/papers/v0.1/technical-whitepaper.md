@@ -12,55 +12,12 @@ A collateral backed stablecoin system ensures the stable value of a digital toke
 
 Below we describe new concepts, system actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
 
-## System actors
+## Actors
 
 - **Money users** - These are *regular consumers* that *use*, or *store* the pegged currency money in their blockchain-based *savings account*. The notable target groups that could most benefit from such an offering are *the un-banked* and those with limited access to a *stable Store of Value* (SoV) from countries with dysfunctional monetary policies. This could also be used by the *early adopter community* of a public blockchain.
 - **Loan takers** - Most commonly, existing *native token holders* who have decided to *take a loan* against their holdings. The main incentive for this group consists of being *long native token*, while being able to *deploy its value* in other profitable transactions. They may also initially be *motivated by the technology* itself, however this is not a long-term sustainable incentive.
 - **Price feed providers** - maintain the system by *providing accurate rates* of exchange between naive currency (ie ETH), the reference currency (ie USD) as well as the pegged currency. These providers are expected to compete in *establishing trust* amongst the loan takers, and in return be *monetarily compensated* based on trust level, as well as *avoiding penalties* by adhering to the loan system rules.
 - **Loan liquidators** - maintain the system while *competing* with each other to *liquidate* undercollateralized loans. They monitor loans and trigger liquidation while *speculating* on the future collateralization levels of target loans as judged by the system.
-
-## Tokens and currencies
-
-The system supports pegging to any relatively stable real world currency, as well as other relatively stable baskets of assets, always backed with the most trust-minimized blockchain collateral (ETH in case of Ethereum, BTC for Bitcoin). The main viable implementation of this system however will focus on the US dollar due to its relative ubiquity at time of this writing.
-
-### Pegged currency money
-
-The pegged currency money is the product that is ultimate offered to everyday digital money users and holders. It will have a stable value, the unit of which, should already be (or will be) widely accepted and used in everyday commerce transactions by buyers and merchants. The Ethereum based MVP implementation of this system will use a custom ERC20 that represents the value of the US dollar ($USD).
-
-The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of such functionality is described by the official [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md)(also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/)). Additional functionality should be implemented to respectively **mint** or **burn** tokens upon the pegged currency's **issuance** or **return**.
-
-### Reference currency
-
-This is the real world currency, or unit of account, the pegged currency will be pegged to. For example, the US dollar ($USD) is the most commonly used reference currency in most existing stablecoin implementations.
-
-The system is designed such that it would work with any relatively stable currency, or basket of goods, assets and/or currencies. For example the Euro can be a reference currency, and so could be a basket of consumer goods defined by an international body. Any blockchain user would theoretically be able to create a new currency peg to their target currency reference, by deploying the open source contracts.
-
-### Backing asset token
-
-As mentioned, any public blockchain's native asset token satisfies the role of backing collateral asset, given that it is likely to be:
-
-- The most third-party trust-minimized token on that blockchain.
-- Widely used as a Store of Value (SoV) by the blockchain's early adopters.
-
-It is essential for the system to prevent significant issuance of pegged currency, without securing a corresponding value of backing asset, per loan instance, and for the system as a whole. Similarly, it is crucial for the system to respond to backing asset release requests, when corresponding pegged currency is being returned to the system. In a healthy system, the value of the backing asset token is greater than the pegged currency by a healthy margin, in order to insure against the possibility of a major devaluation in that backing asset.
-
-## System components
-
-The \{\{PegLoan\}\} stablecoin system consists of the following major components:
-
-- Pegged token (aka stablecoin)
-- Main system
-  - Monetary policy functional area
-  - Loans functional area
-  - Savings functional area
-  - Price feeds functional area
-  - Liquidation functional area
-- Loan accounts
-- Savings accounts
-- Price feed accounts
-- Liquidator accounts
-
-As part of this proposal, we will discuss in detail the functionality of each component as well as how end-to-end scenarios function.
 
 ## System operation
 
@@ -158,6 +115,102 @@ The actual savings interest rate moves by a maximum of `0.5% per week` towards t
 - Variable ratio moving at a rate of `1% per week` based on a target rate ranging between `150%` and `120%`, chosen based on changing variability of the native token price, and time since the last destabilizing change.
   - `150%` - 0 days since the last change exceeding `20% per day` or `50% per week` in magnitude, or the system's first day, whichever comes first.
   - `120%` - `5+` years after last change exceeding `20% per day` or `50% per week` in magnitude, or the system's first day, whichever comes first.
+
+## System structure
+
+### Components
+
+The \{\{PegLoan\}\} stablecoin system consists of the following major components:
+
+- Main system
+  - Price feeds functional area
+  - Monetary policy functional area
+  - Loans functional area
+  - Savings functional area
+  - Liquidation functional area
+- Pegged token (aka stablecoin)
+- Loan accounts
+- Savings accounts
+- Price feed accounts
+- Liquidator accounts
+
+As part of this proposal, we will discuss in detail the functionality of each component as well as how end-to-end scenarios function.
+
+### State
+
+Main system contracts hold the following variables related to the areas of the system like Savings, Loans, and Price Feeds:
+
+- Loan contracts
+- Price feed contracts
+- Savings account contracts
+- Total and individual price feed allocations (in pegged currency)
+- Price feed revenue pools (in pegged currency)
+- Savings pool (in pegged currency)
+- Current (processing) medium trust price feeds
+- Finalized (finalized) medium trust price feeds
+- Archive of values
+  - Frequencies: 7 x daily, 5 x weekly, 5 x 5 weekly (~ monthly), 5 x 25 weekly (~ bi-yearly), 5 x 125 weekly (~2.4 yearly), 5 x 625 weekly (~ 12 years), 5 x 3125 weekly (~60 years)
+  - Savings interest rate
+  - Loan fee rate
+  - Native token price
+  - Peg equilibrium metric
+  - Total issuance
+
+#### Delayed price reporting state
+
+The system has two operational areas, the major one relies on **delayed price reporting**, while the other smaller area relies on **instant price reporting**. The area relying on delayed price reporting has the following daily states:
+
+- **Processing** - This state is before a given day's price reporting is finalized. We transition from processing to finalized within `1 day`.
+- **Empty** - This is the initial finalized state when no price providers have yet registered with the system. It is very much a temporary and short lived state.
+- **Stable**: where no anomalies in delayed price reporting has been detected, and where daily and instant prices are within known variability thresholds `5%`.
+  - Currency issuance will be instant within transaction, up to a limit of `5%` total issuance.
+  - Loan liquidation will take `1 week`
+- **Unstable**: where minor anomalies have been detected such as
+  ~~1. change in instant price is possibly not reported by minority ~~
+  ~~2. drastic recent changes in allocations such as `10%` drops~~
+  ~~3. Volatility of reported prices exceeding `20% weekly` despite lack of dispute.~~
+  - Currency issuance will be instant within transaction, up to a limit of `0.5%` total issuance.
+  - Loan liquidation will take `1 week` and will be evaluated against all historical native token prices of that week
+- **Dispute**: where major disagreement is occurring between medium trust providers
+  - Currency issuance will be disabled
+  - Loan liquidation will be postponed for the duration of dispute state
+
+#### Instant price reporting state
+
+The instant price reporting area has separate yet similar states. The state results applies only to currency issuance and is applied on top of the finalized delayed states from `2 days` ago. This means currency issuance will be restricted based on the maximum of each area's state. For example, `Unstable` and `Stable` will result in `Unstable`. Following are the instant price reporting states:
+
+- **Empty** - This is the initial state when no price providers have reported instant prices within the last `1 day`
+- **Stable**: where no anomalies in instant price reporting has been detected, and where instant prices are within known variability thresholds `5%`.
+  - Currency issuance will be instant within transaction, up to a limit of `5%` total issuance.
+- **Unstable**: where minor anomalies have been detected such as
+  - Currency issuance will be instant within transaction, up to a limit of `0.5%` total issuance.
+- **Dispute**: where major disagreement is occurring between medium trust providers
+  - Currency issuance will be disabled
+
+## Tokens and currencies
+
+The system supports pegging to any relatively stable real world currency, as well as other relatively stable baskets of assets, always backed with the most trust-minimized blockchain collateral (ETH in case of Ethereum, BTC for Bitcoin). The main viable implementation of this system however will focus on the US dollar due to its relative ubiquity at time of this writing.
+
+### Pegged currency (money)
+
+The pegged currency is the money product that is ultimate offered to everyday digital money users. It will have a stable value, the unit of which is widely accepted and used in commercial transactions by buyers and merchants. The Ethereum based proof of concept implementation of this system will use the ERC20 token standard to represents the value of the US dollar ($USD).
+
+The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of such functionality is described by the official [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md)(also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/)). Additional functionality should be implemented to respectively **mint** or **burn** tokens upon the pegged currency's **issuance** or **return**.
+
+### Reference currency
+
+This is the real world currency, or unit of account, the pegged currency will be pegged to. For example, the US dollar ($USD) is the most commonly used reference currency in most existing stablecoin implementations.
+
+The system is designed such that it would work with any relatively stable currency, or basket of goods, assets and/or currencies. For example the Euro can be a reference currency, and so could be a basket of consumer goods defined by an international body. Any blockchain user would theoretically be able to create a new currency peg to their target currency reference, by deploying the open source contracts.
+
+### Backing asset token
+
+As mentioned, any public blockchain's native asset token satisfies the role of backing collateral asset, given that it is likely to be:
+
+- The most third-party trust-minimized token on that blockchain.
+- Widely used as a Store of Value (SoV) by the blockchain's early adopters.
+
+It is essential for the system to prevent significant issuance of pegged currency, without securing a corresponding value of backing asset, per loan instance, and for the system as a whole. Similarly, it is crucial for the system to respond to backing asset release requests, when corresponding pegged currency is being returned to the system. In a healthy system, the value of the backing asset token is greater than the pegged currency by a healthy margin, in order to insure against the possibility of a major devaluation in that backing asset.
 
 ## Loans
 
@@ -302,53 +355,6 @@ Loan fees are also varied based on the global equilibrium price of the pegged cu
 ### Savings pool
 
 Savings pool is a portion of pegged currency tokens held by the main system contracts, set to be payed out to money owners as interest, when they lock their tokens in a savings account contract for periods of time. A portion of the fee paid by loan takers is always transferred to this pool. Also, any penalties imposed on price feed are taken out of the offending provider's revenue pool and transferred into the savings pool. Payout is based on the *savings interest rate* (see [savings rate](#savings-rate) and variable definition under [monetary variables](#monetary-variables)).
-
-## System state
-
-Main system contracts hold the following variables related to the areas of the system like Savings, Loans, and Price Feeds:
-
-- Loan contracts
-- Price feed contracts
-- Savings account contracts
-- Total and individual price feed allocations (in pegged currency)
-- Price feed revenue pools (in pegged currency)
-- Savings pool (in pegged currency)
-- Current (processing) medium trust price feeds
-- Finalized (finalized) medium trust price feeds
-- Archive of values
-  - Frequencies: 7 x daily, 5 x weekly, 5 x 5 weekly (~ monthly), 5 x 25 weekly (~ bi-yearly), 5 x 125 weekly (~2.4 yearly), 5 x 625 weekly (~ 12 years), 5 x 3125 weekly (~60 years)
-  - Savings interest rate
-  - Loan fee rate
-  - Native token price
-  - Peg equilibrium metric
-  - Total issuance
-
-The system has two operational areas, the major one relies on **delayed price reporting**, while the other smaller area relies on **instant price reporting**. The area relying on delayed price reporting has the following daily states:
-
-- **Processing** - This state is before a given day's price reporting is finalized. We transition from processing to finalized within `1 day`.
-- **Empty** - This is the initial finalized state when no price providers have yet registered with the system. It is very much a temporary and short lived state.
-- **Stable**: where no anomalies in delayed price reporting has been detected, and where daily and instant prices are within known variability thresholds `5%`.
-  - Currency issuance will be instant within transaction, up to a limit of `5%` total issuance.
-  - Loan liquidation will take `1 week`
-- **Unstable**: where minor anomalies have been detected such as
-  ~~1. change in instant price is possibly not reported by minority ~~
-  ~~2. drastic recent changes in allocations such as `10%` drops~~
-  ~~3. Volatility of reported prices exceeding `20% weekly` despite lack of dispute.~~
-  - Currency issuance will be instant within transaction, up to a limit of `0.5%` total issuance.
-  - Loan liquidation will take `1 week` and will be evaluated against all historical native token prices of that week
-- **Dispute**: where major disagreement is occurring between medium trust providers
-  - Currency issuance will be disabled
-  - Loan liquidation will be postponed for the duration of dispute state
-
-The instant price reporting area has separate yet similar states. The state results applies only to currency issuance and is applied on top of the finalized delayed states from `2 days` ago. This means currency issuance will be restricted based on the maximum of each area's state. For example, `Unstable` and `Stable` will result in `Unstable`. Following are the instant price reporting states:
-
-- **Empty** - This is the initial state when no price providers have reported instant prices within the last `1 day`
-- **Stable**: where no anomalies in instant price reporting has been detected, and where instant prices are within known variability thresholds `5%`.
-  - Currency issuance will be instant within transaction, up to a limit of `5%` total issuance.
-- **Unstable**: where minor anomalies have been detected such as
-  - Currency issuance will be instant within transaction, up to a limit of `0.5%` total issuance.
-- **Dispute**: where major disagreement is occurring between medium trust providers
-  - Currency issuance will be disabled
 
 ## Notable constraint adjustments
 
