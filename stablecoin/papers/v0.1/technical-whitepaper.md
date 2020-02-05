@@ -6,11 +6,9 @@
 
 ### Abstract
 
-This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the stablecoin is pegged to the value of a widely accepted **reference currency**.
+This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the system is **immutable** and uses a **decentralized oracle mechanism**. Our *proof of concept* is implemented on Ethereum using Solidity, uses *ETH* exclusively for collateralization, uses a peg to *USD* as its reference currency.
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand through adjusting monetary variables using market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. In case of our *Minimum Viable Product (MVP) implemented on Ethereum*, the *native blockchain asset token* is **ETH** and the *reference currency* is **USD ($)**.
-
-Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no tokens for governance or equity*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
+A collateral backed stablecoin system ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand through as a response to market conditions, by adjusting monetary variables such as fees and interest rates. Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains *no on-chain governance process* and *no tokens for governance or equity*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
 
 Below we describe new concepts, system inter-actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
 
