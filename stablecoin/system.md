@@ -48,7 +48,7 @@ This section outline:
   - [Magic values](#magic-values)
   - [Open ideas](#open-ideas)
     - [Immutable price feeds](#immutable-price-feeds)
-    - [[Closed] Consider design from Serenus](#closed-consider-design-from-serenus)
+    - [Consider design from Serenus (Closed)](#consider-design-from-serenus-closed)
   - [Volatility](#volatility)
     - [Note on volatility of Ether](#note-on-volatility-of-ether)
   - [Versioning - for (emergency) hard-forks](#versioning---for-emergency-hard-forks)
@@ -468,7 +468,7 @@ The native token price can be obtained by aggregating price information for nati
 
 The price reporting actions would need to be triggered by anonymous callers, who may be rewarded by the price feed contract for their gas cost, plus a relatively small reward. The excess price feed revenue would also be transferred back into the main system contract under the savings pool.
 
-#### [Closed] Consider design from Serenus
+#### Consider design from Serenus (Closed)
 
 Thanks to Tom Howard for pointing to [Serenus](https://serenuscoin.com/).
 
