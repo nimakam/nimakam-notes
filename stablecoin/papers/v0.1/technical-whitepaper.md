@@ -8,9 +8,9 @@
 
 This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the system is **immutable** and uses a **decentralized oracle mechanism**. Our proof of concept is implemented on Ethereum using Solidity, uses ETH exclusively for collateralization, uses a peg to $USD as its reference currency.
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand through as a response to market conditions, by adjusting monetary variables such as fees and interest rates. Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
+The collateral backed stablecoin systems ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand as a response to market conditions, by adjusting monetary variables (eg fees and interest rates). Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency**.
 
-Below we describe new concepts, system actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
+Below we describe the system actors, structure, and operations at various levels of detail, along with some new concepts. A proof of concept implementation of this idea is also available, written in Solidity.
 
 ## Actors
 
@@ -386,42 +386,6 @@ All percent-based (%) penalties are enforced with respect to the corresponding p
 
 ## Appendix
 
-### Terms
-
-**Asset** - Any valuable object. It may not necessarily be used as money for exchange of value.
-
-**Money** - A tool used by humans to exchange value. Any valuable object (such as a coffee mug) can theoretically be used as money, perhaps on rare occasions. However a good money candidate, can be used in more contexts.
-
-Gold, Bitcoin (BTC) and Ether (ETH) are all examples of asset moneys, that can be used for exchange on occasion, but are not necessarily the best option when we have access to more widely accepted alternatives like USD.
-
-**Currency** - A type of money that is commonly used in day to day commerce, as it is used and accepted by many buyers and merchants. Good currencies are stable in value and are therefore good Stores of Value (SoV). Good currencies also are used as Units of Account (UoA) by more people, and are accepted by more people as Medium of Exchange (MoE). US dollars ($USD) is the example of a good currency money, so are Chinese Yuan, Japanese Yen, and Euro.
-
-**Token** - The digital representation of value on a public blockchain. They can be the digital representation of a real world asset, or they can have inherent digital value like in the case of Bitcoin, Ether and others.
-
-**Medium trust price feed** - Price feeds either in the top `25` in weighted allocation, or allocated at least `4%` of all loans' weighted value. The historical prices from all these feeds are used in weighted form to determine the median daily historical price.
-
-**High trust price feed** - A select group of price feeds either in the top `5` in weighted allocation, or allocated at least `20%` of all loans' weighted value. Through social contract, High trust feeds will be, expected to report price changes of more than `5%`, on the blockchain within `60 seconds`. All high trust feeds are also considered part of the medium trust collection.
-
-**Low trust price feed** - Simply any non-zero allocated feed that is not medium trust. Any price feed that is allocated a non-zero % of a loan with non-zero native token deposits, which is not a medium trust feed.
-
-### Magic values
-
-In software engineering, magic values refer to constant values selected by the software author, that determine the constraints that the system operates under. The selection of these values often involves significant deliberation and requires a level of justification. It is always a good question to ask: *Why was that specific "magic value" selected, instead of higher or lower values?*
-
-**Maximum price feed delay** - `1 day` - `86400 seconds`
-
-**Maximum price feed allocations** - `5`
-
-**High trust price feed count** - `5` - Every feed with at least `20%` is included.
-
-**Medium trust price feed count** - `25` - Every feed with at least `4%` is included.
-
-### Front running resistance
-
-Performing liquidations asynchronously and through and request initialization and finalization process, and providing aan initial grace window of a few blocks, ensures that no one can front-run another request and prevent them from participating also. At worst case, the two almost-simultaneous requests will share in the proceeds.
-
-Also anonymizing liquidation requests, ensures that no front-runners can highjack the reputation of another liquidator, and requires them to also have their own logic for evaluating the liquidation conditions, at which point it no longer is much of a front running attempt anyways.
-
 ### Volatility
 
 Historically, stable currencies have not shown a high level of short term volatility, where for example the price goes down 20% one day and goes back up a few minutes or hours. As such transaction delays have a much smaller chance of triggering costs to a stakeholder. There is often however clear longer term trends that can be observed with stable currency, at different points in time.
@@ -432,7 +396,7 @@ However one always needs to be prepared for short term volatility of the native 
 
 Since Ether (ETH) is the other side of the first viable product based on our proposed financial instrument, its volatility also affects our considerations. ETH in the recent years, due to its increasing uses as gas, speculative investment, and collateral, has been relatively more stable as compared to years before. Also due to its future staking use in Ethereum 2.0, we expect its long term volatility to decrease in general. However, it remains primarily a speculative asset subject to significant volatility.
 
-### Versioning - in case of emergency (hard-forks)
+### Versioning - in case of (emergency) hard-forks
 
 The ultimate goal of such a decentralized smart contract system is to be ownerless and live forever. That is, if the current open source implementation were the solution to our original stablecoin problem, there should be no subsequent version needed.
 
@@ -440,15 +404,15 @@ However, due to possibilities of future upgrades to the underlying blockchain it
 
 We are currently witnessing this type of transition with the SAI to DAI migration by Maker. There are a few lessons to be learned from this experience, in the remote case migration is needed.
 
-### Decentralized price feed
+### Immutable price feed
 
 One of the price feeds to the system on Ethereum can be constructed as a decentralized contract, based on market pricing information provided by the UniSwap V2 decentralized exchange. This ownerless, decentralized price feed would then automatically transfer any of its revenue payouts back into the loan system as part of the savings pool.
 
-## Ecosystem and game theory
+### Ecosystem and game theory
 
 The stablecoin system lives on the public blockchain, however the players interacting with it directly or indirectly, all live in the real world and will follow strategies and courses of action, based on their incentives and the changing ecosystem. In order to ensure the success of the stablecoin system, and the money product that it represents, we need to fully understand the ecosystem subsuming it and mitigate any foreseeable issues that may threaten the product's success.
 
-### Strategic dynamic changes
+#### Strategic dynamic changes
 
 A few possibilities around shifting of strategic power between groups of actors:
 
@@ -506,7 +470,7 @@ Given that the system is immutable and holds a large amount of state, in the for
 - **Possibility of un-closable loans due to lost pegged currency** -
 - ToDo - others ...
 
-## Community
+### Community
 
 As a decentralized system and ecosystem, the healthy operation of \{\{PegLoan\}\} will depend on a community of users, loan takers, feed providers and others. The community's potential points of common belief are:
 

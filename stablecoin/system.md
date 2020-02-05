@@ -62,9 +62,9 @@ This section outline:
 
 This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the system is **immutable** and uses a **decentralized oracle mechanism**. Our proof of concept is implemented on Ethereum using Solidity, uses ETH exclusively for collateralization, uses a peg to $USD as its reference currency.
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand through as a response to market conditions, by adjusting monetary variables such as fees and interest rates. Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
+The collateral backed stablecoin systems ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand as a response to market conditions, by adjusting monetary variables (eg fees and interest rates). Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency**.
 
-Below we describe new concepts, system actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
+Below we describe the system actors, structure, and operations at various levels of detail, along with some new concepts. A proof of concept implementation of this idea is also available, written in Solidity.
 
 ## Actors
 
