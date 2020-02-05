@@ -6,13 +6,13 @@
 
 ### Abstract
 
-This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the system is **immutable** and uses a **decentralized oracle mechanism**. Our *proof of concept* is implemented on Ethereum using Solidity, uses *ETH* exclusively for collateralization, uses a peg to *USD* as its reference currency.
+This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the system is **immutable** and uses a **decentralized oracle mechanism**. Our proof of concept is implemented on Ethereum using Solidity, uses ETH exclusively for collateralization, uses a peg to $USD as its reference currency.
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand through as a response to market conditions, by adjusting monetary variables such as fees and interest rates. Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains *no on-chain governance process* and *no tokens for governance or equity*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
+A collateral backed stablecoin system ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand through as a response to market conditions, by adjusting monetary variables such as fees and interest rates. Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
 
-Below we describe new concepts, system inter-actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
+Below we describe new concepts, system actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
 
-## System inter-actors
+## System actors
 
 - **Money users** - These are *regular consumers* that *use*, or *store* the pegged currency money in their blockchain-based *savings account*. The notable target groups that could most benefit from such an offering are *the un-banked* and those with limited access to a *stable Store of Value* (SoV) from countries with dysfunctional monetary policies. This could also be used by the *early adopter community* of a public blockchain.
 - **Loan takers** - Most commonly, existing *native token holders* who have decided to *take a loan* against their holdings. The main incentive for this group consists of being *long native token*, while being able to *deploy its value* in other profitable transactions. They may also initially be *motivated by the technology* itself, however this is not a long-term sustainable incentive.
@@ -61,6 +61,103 @@ The \{\{PegLoan\}\} stablecoin system consists of the following major components
 - Liquidator accounts
 
 As part of this proposal, we will discuss in detail the functionality of each component as well as how end-to-end scenarios function.
+
+## System operation
+
+### Trusted price feed list
+
+The system maintains a list of medium (and high) trusted price feeds, sorted and weighted by both a price feed's revenue pool as well as its issuance allocation. This formula ensures newcomer price providers cannot exert undue influence by instantaneous deployment of capital, while also making sure that loan taker choices in allocating issuance to feeds of their choice also affects the ranking.
+
+The trust rank of each given price feed will be assessed by the system using a custom defined metric calculated by the following formula = `total issuance allocation` x (`revenue pool balance` + `average revenue pool balance`)
+
+The formula is chosen to ensure the ranking maximizes security of the system considering the notable potential attacks that can harm stable operation of the system. The formulation has the following properties:
+
+- **Loan allocation** - Loan takers will be able to directly affect this metric by changing allocations. For example `50%` reduction in allocation will result in a `50%` reduction in the metric.
+- **Long-term revenue** - The amount of previous service to the system accounts for a significant part of the metric. This is to prevent potential easy system capture by whales. A top price feed with `2x` the average price feed pool balance will have a `3x` advantage over a new feed with pool balance `0` and the same allocation. A top price feed with `2x` the average price feed pool balance will have a `2/3x` advantage over an average feed pool balance with the same allocation.
+- **New entrant competitiveness** - A new entrant should be able to compete and not have an unsurmountable impediment to raising in the ranks. An average revenue pool balance value represents `2x` the metric value of a brand new price feed with the same allocation but `0` revenue pool. That is if the new entrant secures `2x` the allocation of average feeds, it will be ranked above them.
+
+### Delayed price aggregation process
+
+The aggregate delayed price is calculated each time the daily delayed prices are finalized, based on a process that aims to provide an accurate daily median price, while reducing or eliminating the chance of system abuse. The system takes the following steps:
+
+- It starts with prices reported by the `20` medium but not high trust price feeds, as reflected by the trusted fee list being finalized
+- The process eliminates outliers in order to keep up to `10` reported delayed prices
+- Then it adds the `5` high trust price feeds back into the list and eliminates outliers again to reach up to `13` prices
+- If the range of prices exceeds `25%` the delayed price sub-system is designated to be in `Dispute` state, which postpones liquidation finalizations and halts instant loans by reducing the instant loan limit rate to `0%`.
+- If the range of prices exceeds `5%` state is set to `Unstable` and instant loan limit rate is set to `0.5%`.
+- Otherwise the sub-system is in `Stable` state.
+- The finalized delayed price is set to the average of all remaining up to `13` reported prices, weighted by each feed's total allocation.
+- If in `Dispute` state, all price feeds pay a dispute penalty calculated by the formula: `Feed dispute penalty rate` = `100%` x abs(`Feed price` - `Aggregate price`) / `Aggregate price` / `2`
+- If in `Unstable` state, all price feeds pay a dispute penalty calculated by the formula: `Feed instability penalty rate` = `100%` x abs(`Feed price` - `Aggregate price`) / `Aggregate price` / `7`
+
+### Instant price aggregation process
+
+The aggregate instant price is calculated each time an instant price is reported, based on a process that aims to enable instant loan taking capability, while reducing or eliminating the 
+chance of system abuse. The system takes the following steps:
+
+- It starts with prices reported by the `5` *high trust price feeds* as reflected by the last finalized trusted fee list.
+- The process eliminates any values that are not reported within the last `1 day`, then it eliminates outliers in order to keep up to `3` reported instant prices.
+- If the range of prices exceeds `20%` the instant price sub-system is designated to be in `Dispute` state, which halts instant loans by reducing the instant loan limit rate to `0%`.
+- If the range of prices exceeds `5%` state is set to `Unstable` and instant loan limit rate is set to `0.5%`.
+- Otherwise the sub-system is in `Stable` state, instant loan limit rate is set to `5%`..
+- The instant price is set to be the lowest out of the up to `3` remaining values, in order to further protect against system leaking pegged currency issuance
+
+### Automated monetary system
+
+The main goal of the automated monetary system is to balance supply of pegged currency with its demand, and maintain a price pegged to the reference currency, as reported by the price feed providers as historical prices. The main variables that the monetary system can affect are the following:
+
+- Price feed revenue rate
+- Loan fee rate
+- Savings interest rate
+- Loan collateral threshold ratio
+
+**Peg equilibrium metric** - is a measure of how stable the peg is relative to the desired `1.00000` rate, and determines the level of market's stability, overdemand, or oversupply. The metric is calculated as follows: `Peg equilibrium metric` = (`+` or `-`) Σ abs(`Peg price` - `1.00`), where the sum is taken for the days in a row that the peg has been above or below `1.00`, and where `+` denotes being above, and `-` denotes being below `1.00`.
+
+**Loan fee rate** - Is a yearly rate set by the automated monetary system that determines the fee paid by loan takers upon structural changes made to their loan, such as allocation or issuance changes. For example, at a given point in time, the loan fee rate could be `4%` per year (equivalent to `0.01096%` per day). Assuming no future change to the rate (which is unlikely), the loan taker should project to pay `$400` per year in fees on a loan that has issued `$10,000` worth of pegged currency, upon closing the loan. The actual annual rate will be calculated by adding all the variable daily rates.
+
+The monetary policy engine aims to vary the rates based on the global equilibrium price of the pegged currency, in order to incentivize increase or decrease the pegged currency supply based on the creation or cloning of debt positions, and thus affect the equilibrium price of the pegged currency itself from the supply side.
+
+The daily loan fee rate varies by `1% weekly` towards the *loan fee target rate*.
+
+**Base loan fee rate** - is the loan fee rate used at the most stable conditions of system operations. It can be set using one of the following strategies:
+
+- Fixed `base loan fee rate` = `2%` (current implementation).
+- A fee that very gradually moves up or down (by a maximum of `1% per year`), based on ongoing feed provider voting as part of price reporting process.
+- A fee that varies based on past performance of the loan fee rate, selected from past periods where the *peg equilibrium metric* has had the lowest average magnitude, and when *total issuance* has grown the most.
+
+**Loan fee target rate** - is set by the peg currency supply demand equilibrium policy as the minimum of the fixed value `20%` and the formula: `Loan fee target rate` = `base loan fee rate` - `peg equilibrium metric` x `10` x `1%`. This means a full week of peg price at `$1.02`, will lower the *loan fee target rate* by `1.4%` and a full week of peg price at `$1.05` will lower it by `2.8%`.
+
+**Price feed revenue rate** - Is a weekly rate set by the automated monetary system that determines what percentage of total system issuance is expected to eventually be paid out to price feed providers. The revenue comes from part of the loan fee stream and so the price feed revenue daily rate has to always be lower than the loan fee daily rate. The rest of the loan fees will go into the savings pool to be paid out to savings account owners. For example, at a given point in time, the price feed revenue rate could be `0.01917%` per week (equivalent to `1%` per year). Assuming no future change to the rate (which is unlikely), a price feed provider can project its revenue pool to receive `$20,000` yearly assuming a total issuance allocation of `$2,000,000`. This could be the case if total system issuance is `$10,000,000` and the providers average weighted allocation percentage is `20%`.
+
+The price feed rate can be set using the following strategies:
+
+- Fixed `price feed revenue rate` = `1%` (current implementation).
+- The price feed rate will vary logarithmically based on **total issuance** of the system. See table below for rates corresponding to total issuance.
+
+|Total issuance|Price feed revenue rate|Total revenue|Average revenue|
+|--------------|-----------------------|-------------|---------------|
+|$1|2.5%|$0.25|$0.01|
+|$1,000|2%|$20|$0.80|
+|$1,000,000|1.5%|$15,000|$600|
+|$1,000,000,000|1%|$10,000,000|$400,000|
+|$1,000,000,000,000|0.5%|$5,000,000,000|$200,000,000|
+
+**Savings interest rate** - Is a daily rate set by the automated monetary system that determines the interest paid to owners of savings accounts. For example, at a given point in time, the savings interest rate can be `0.01096%` per day (equivalent to `4%` per year). Assuming no future change to the rate (which is unlikely), the savings account owner can project an interest of `$400` per year on a savings account balance of `$10,000`.
+
+The actual savings interest rate moves by a maximum of `0.5% per week` towards the target savings interest rate set by the automated monetary system. The interest rate target in turn is set to minimum of the two following values:
+
+1. **Target savings interest rate** - set as part of peg supply demand equilibrium policy, which moves in the same direction as the loan fee rate. This value is calculated with the following formula: `Target savings interest rate` = 2 x (`Loan fee target rate` - `price feed revenue rate`). This means at the most stable operation conditions where *loan fee target rate* is `2%` and *price feed revenue rate* is `1%`, the *Monetary target savings interest rate* will be `2%`.
+2. **Max feasible savings interest rate** - calculated based on the formula: `Max feasible savings interest yearly rate` = `100%` x `4 quarters / year` x `Total savings pool balance` / `Total savings registered`. The savings pool will hold enough liquidity to cover `1 quarter` of accumulated interest at any time, this is to keep its position at a safe level in case:
+   1. Savings pool inflow decreases considerably.
+   2. There is a run on accumulating interest in existing savings accounts.
+   3. There is a considerable increase in new savings registered.
+
+**Loan collateral threshold ratio** - Determines the safe level of pegged currency issuance given the backing native token collateral. This ratio can take on of the following forms:
+
+- Fixed ratio of `150%` (current implementation)
+- Variable ratio moving at a rate of `1% per week` based on a target rate ranging between `150%` and `120%`, chosen based on changing variability of the native token price, and time since the last destabilizing change.
+  - `150%` - 0 days since the last change exceeding `20% per day` or `50% per week` in magnitude, or the system's first day, whichever comes first.
+  - `120%` - `5+` years after last change exceeding `20% per day` or `50% per week` in magnitude, or the system's first day, whichever comes first.
 
 ## Loans
 
@@ -206,7 +303,7 @@ Loan fees are also varied based on the global equilibrium price of the pegged cu
 
 Savings pool is a portion of pegged currency tokens held by the main system contracts, set to be payed out to money owners as interest, when they lock their tokens in a savings account contract for periods of time. A portion of the fee paid by loan takers is always transferred to this pool. Also, any penalties imposed on price feed are taken out of the offending provider's revenue pool and transferred into the savings pool. Payout is based on the *savings interest rate* (see [savings rate](#savings-rate) and variable definition under [monetary variables](#monetary-variables)).
 
-## System state and operation
+## System state
 
 Main system contracts hold the following variables related to the areas of the system like Savings, Loans, and Price Feeds:
 
@@ -252,101 +349,6 @@ The instant price reporting area has separate yet similar states. The state resu
   - Currency issuance will be instant within transaction, up to a limit of `0.5%` total issuance.
 - **Dispute**: where major disagreement is occurring between medium trust providers
   - Currency issuance will be disabled
-
-### Trusted price feed list
-
-The system maintains a list of medium (and high) trusted price feeds, sorted and weighted by both a price feed's revenue pool as well as its issuance allocation. This formula ensures newcomer price providers cannot exert undue influence by instantaneous deployment of capital, while also making sure that loan taker choices in allocating issuance to feeds of their choice also affects the ranking.
-
-The trust rank of each given price feed will be assessed by the system using a custom defined metric calculated by the following formula = `total issuance allocation` x (`revenue pool balance` + `average revenue pool balance`)
-
-The formula is chosen to ensure the ranking maximizes security of the system considering the notable potential attacks that can harm stable operation of the system. The formulation has the following properties:
-
-- **Loan allocation** - Loan takers will be able to directly affect this metric by changing allocations. For example `50%` reduction in allocation will result in a `50%` reduction in the metric.
-- **Long-term revenue** - The amount of previous service to the system accounts for a significant part of the metric. This is to prevent potential easy system capture by whales. A top price feed with `2x` the average price feed pool balance will have a `3x` advantage over a new feed with pool balance `0` and the same allocation. A top price feed with `2x` the average price feed pool balance will have a `2/3x` advantage over an average feed pool balance with the same allocation.
-- **New entrant competitiveness** - A new entrant should be able to compete and not have an unsurmountable impediment to raising in the ranks. An average revenue pool balance value represents `2x` the metric value of a brand new price feed with the same allocation but `0` revenue pool. That is if the new entrant secures `2x` the allocation of average feeds, it will be ranked above them.
-
-### Delayed price aggregation process
-
-The aggregate delayed price is calculated each time the daily delayed prices are finalized, based on a process that aims to provide an accurate daily median price, while reducing or eliminating the chance of system abuse. The system takes the following steps:
-
-- It starts with prices reported by the `20` medium but not high trust price feeds, as reflected by the trusted fee list being finalized
-- The process eliminates outliers in order to keep up to `10` reported delayed prices
-- Then it adds the `5` high trust price feeds back into the list and eliminates outliers again to reach up to `13` prices
-- If the range of prices exceeds `25%` the delayed price sub-system is designated to be in `Dispute` state, which postpones liquidation finalizations and halts instant loans by reducing the instant loan limit rate to `0%`.
-- If the range of prices exceeds `5%` state is set to `Unstable` and instant loan limit rate is set to `0.5%`.
-- Otherwise the sub-system is in `Stable` state.
-- The finalized delayed price is set to the average of all remaining up to `13` reported prices, weighted by each feed's total allocation.
-- If in `Dispute` state, all price feeds pay a dispute penalty calculated by the formula: `Feed dispute penalty rate` = `100%` x abs(`Feed price` - `Aggregate price`) / `Aggregate price` / `2`
-- If in `Unstable` state, all price feeds pay a dispute penalty calculated by the formula: `Feed instability penalty rate` = `100%` x abs(`Feed price` - `Aggregate price`) / `Aggregate price` / `7`
-
-### Instant price aggregation process
-
-The aggregate instant price is calculated each time an instant price is reported, based on a process that aims to enable instant loan taking capability, while reducing or eliminating the 
-chance of system abuse. The system takes the following steps:
-
-- It starts with prices reported by the `5` *high trust price feeds* as reflected by the last finalized trusted fee list.
-- The process eliminates any values that are not reported within the last `1 day`, then it eliminates outliers in order to keep up to `3` reported instant prices.
-- If the range of prices exceeds `20%` the instant price sub-system is designated to be in `Dispute` state, which halts instant loans by reducing the instant loan limit rate to `0%`.
-- If the range of prices exceeds `5%` state is set to `Unstable` and instant loan limit rate is set to `0.5%`.
-- Otherwise the sub-system is in `Stable` state, instant loan limit rate is set to `5%`..
-- The instant price is set to be the lowest out of the up to `3` remaining values, in order to further protect against system leaking pegged currency issuance
-
-### Automated monetary system
-
-The main goal of the automated monetary system is to balance supply of pegged currency with its demand, and maintain a price pegged to the reference currency, as reported by the price feed providers as historical prices. The main variables that the monetary system can affect are the following:
-
-- Price feed revenue rate
-- Loan fee rate
-- Savings interest rate
-- Loan collateral threshold ratio
-
-**Peg equilibrium metric** - is a measure of how stable the peg is relative to the desired `1.00000` rate, and determines the level of market's stability, overdemand, or oversupply. The metric is calculated as follows: `Peg equilibrium metric` = (`+` or `-`) Σ abs(`Peg price` - `1.00`), where the sum is taken for the days in a row that the peg has been above or below `1.00`, and where `+` denotes being above, and `-` denotes being below `1.00`.
-
-**Loan fee rate** - Is a yearly rate set by the automated monetary system that determines the fee paid by loan takers upon structural changes made to their loan, such as allocation or issuance changes. For example, at a given point in time, the loan fee rate could be `4%` per year (equivalent to `0.01096%` per day). Assuming no future change to the rate (which is unlikely), the loan taker should project to pay `$400` per year in fees on a loan that has issued `$10,000` worth of pegged currency, upon closing the loan. The actual annual rate will be calculated by adding all the variable daily rates.
-
-The monetary policy engine aims to vary the rates based on the global equilibrium price of the pegged currency, in order to incentivize increase or decrease the pegged currency supply based on the creation or cloning of debt positions, and thus affect the equilibrium price of the pegged currency itself from the supply side.
-
-The daily loan fee rate varies by `1% weekly` towards the *loan fee target rate*.
-
-**Base loan fee rate** - is the loan fee rate used at the most stable conditions of system operations. It can be set using one of the following strategies:
-
-- Fixed `base loan fee rate` = `2%` (current implementation).
-- A fee that very gradually moves up or down (by a maximum of `1% per year`), based on ongoing feed provider voting as part of price reporting process.
-- A fee that varies based on past performance of the loan fee rate, selected from past periods where the *peg equilibrium metric* has had the lowest average magnitude, and when *total issuance* has grown the most.
-
-**Loan fee target rate** - is set by the peg currency supply demand equilibrium policy as the minimum of the fixed value `20%` and the formula: `Loan fee target rate` = `base loan fee rate` - `peg equilibrium metric` x `10` x `1%`. This means a full week of peg price at `$1.02`, will lower the *loan fee target rate* by `1.4%` and a full week of peg price at `$1.05` will lower it by `2.8%`.
-
-**Price feed revenue rate** - Is a weekly rate set by the automated monetary system that determines what percentage of total system issuance is expected to eventually be paid out to price feed providers. The revenue comes from part of the loan fee stream and so the price feed revenue daily rate has to always be lower than the loan fee daily rate. The rest of the loan fees will go into the savings pool to be paid out to savings account owners. For example, at a given point in time, the price feed revenue rate could be `0.01917%` per week (equivalent to `1%` per year). Assuming no future change to the rate (which is unlikely), a price feed provider can project its revenue pool to receive `$20,000` yearly assuming a total issuance allocation of `$2,000,000`. This could be the case if total system issuance is `$10,000,000` and the providers average weighted allocation percentage is `20%`.
-
-The price feed rate can be set using the following strategies:
-
-- Fixed `price feed revenue rate` = `1%` (current implementation).
-- The price feed rate will vary logarithmically based on **total issuance** of the system. See table below for rates corresponding to total issuance.
-
-|Total issuance|Price feed revenue rate|Total revenue|Average revenue|
-|--------------|-----------------------|-------------|---------------|
-|$1|2.5%|$0.25|$0.01|
-|$1,000|2%|$20|$0.80|
-|$1,000,000|1.5%|$15,000|$600|
-|$1,000,000,000|1%|$10,000,000|$400,000|
-|$1,000,000,000,000|0.5%|$5,000,000,000|$200,000,000|
-
-**Savings interest rate** - Is a daily rate set by the automated monetary system that determines the interest paid to owners of savings accounts. For example, at a given point in time, the savings interest rate can be `0.01096%` per day (equivalent to `4%` per year). Assuming no future change to the rate (which is unlikely), the savings account owner can project an interest of `$400` per year on a savings account balance of `$10,000`.
-
-The actual savings interest rate moves by a maximum of `0.5% per week` towards the target savings interest rate set by the automated monetary system. The interest rate target in turn is set to minimum of the two following values:
-
-1. **Target savings interest rate** - set as part of peg supply demand equilibrium policy, which moves in the same direction as the loan fee rate. This value is calculated with the following formula: `Target savings interest rate` = 2 x (`Loan fee target rate` - `price feed revenue rate`). This means at the most stable operation conditions where *loan fee target rate* is `2%` and *price feed revenue rate* is `1%`, the *Monetary target savings interest rate* will be `2%`.
-2. **Max feasible savings interest rate** - calculated based on the formula: `Max feasible savings interest yearly rate` = `100%` x `4 quarters / year` x `Total savings pool balance` / `Total savings registered`. The savings pool will hold enough liquidity to cover `1 quarter` of accumulated interest at any time, this is to keep its position at a safe level in case:
-   1. Savings pool inflow decreases considerably.
-   2. There is a run on accumulating interest in existing savings accounts.
-   3. There is a considerable increase in new savings registered.
-
-**Loan collateral threshold ratio** - Determines the safe level of pegged currency issuance given the backing native token collateral. This ratio can take on of the following forms:
-
-- Fixed ratio of `150%` (current implementation)
-- Variable ratio moving at a rate of `1% per week` based on a target rate ranging between `150%` and `120%`, chosen based on changing variability of the native token price, and time since the last destabilizing change.
-  - `150%` - 0 days since the last change exceeding `20% per day` or `50% per week` in magnitude, or the system's first day, whichever comes first.
-  - `120%` - `5+` years after last change exceeding `20% per day` or `50% per week` in magnitude, or the system's first day, whichever comes first.
 
 ## Notable constraint adjustments
 

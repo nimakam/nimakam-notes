@@ -14,7 +14,7 @@ Other sections outline:
 This section outline:
 
 - [System basics](#system-basics)
-- [System inter-actors](#system-inter-actors)
+- [System actors](#system-actors)
 - [Tokens and currencies](#tokens-and-currencies)
   - [Pegged currency money](#pegged-currency-money)
   - [Reference currency](#reference-currency)
@@ -56,11 +56,13 @@ This section outline:
 
 ## System basics
 
-A collateral backed stablecoin system ensures the stable value of a digital token, through securing backing collateral of equal or higher value, and by balancing token supply and demand in the markets through adjusting monetary variables based on market pricing information. Variations of such a system, such as MakerDAO's DAI token, have already been implemented on public blockchain smart contracts. For our *Minimum Viable Product (MVP)* implemented on *Ethereum*, the *native blockchain asset token* is **Ether (ETH)** and the *reference currency* is the **US dollar ($USD)**.
+This research proposal describes a **collateral-backed** **stablecoin** system implemented on a public blockchain, where the exclusive backing collateral is the **native blockchain asset token**, and where the system is **immutable** and uses a **decentralized oracle mechanism**. Our proof of concept is implemented on Ethereum using Solidity, uses ETH exclusively for collateralization, uses a peg to $USD as its reference currency.
 
-Unlike other similar systems however, the proposed system contains *no on-chain governance process* and *no equity or governance tokens*. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** relative to comparable solutions. We describe new concepts, inter-actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also available.
+A collateral backed stablecoin system ensures the stable value of a digital token, through securing collateral of equal or higher value, and by balancing token supply and demand through as a response to market conditions, by adjusting monetary variables such as fees and interest rates. Variations of such a system (eg MakerDAO's DAI), are already offered on public blockchains, however our proposed system contains **no on-chain governance process** and **no tokens for governance or equity**. The proposal posits that eliminating these, in favor of an on-chain incentive system, **reduces centralization**, and **increases the capital efficiency** when compared to the alternatives.
 
-## System inter-actors
+Below we describe new concepts, system actors, system components and functionality at high level as well as in detail. A proof of concept implementation of this idea, written in Solidity on Ethereum, is also made available.
+
+## System actors
 
 - **Money users** - These are *regular consumers* that *use*, or *store* the pegged currency money in their blockchain-based *savings account*. The notable target groups that could most benefit from such an offering are *the un-banked* and those with limited access to a *stable Store of Value* (SoV) from countries with dysfunctional monetary policies. This could also be used by the *early adopter community* of a public blockchain.
 - **Loan takers** - Most commonly, existing *native token holders* who have decided to *take a loan* against their holdings. The main incentive for this group consists of being *long native token*, while being able to *deploy its value* in other profitable transactions. They may also initially be *motivated by the technology* itself, however this is not a long-term sustainable incentive.
