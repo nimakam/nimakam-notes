@@ -79,7 +79,7 @@ Below we describe the system actors, structure, and operations at various levels
 
 The system maintains a list of medium (and high) trusted price feeds, sorted and weighted by both a price feed's revenue pool as well as its issuance allocation. This formula ensures newcomer price providers cannot exert undue influence by instantaneous deployment of capital, while also making sure that loan taker choices in allocating issuance to feeds of their choice also affects the ranking.
 
-The trust rank of each given price feed will be assessed by the system using a custom defined metric calculated by the following formula = `total issuance allocation` x (`revenue pool balance` + `average revenue pool balance`)
+The trust rank of each given price feed will be assessed by the system using a custom defined metric calculated by the following formula: `trust weighting metric` = `total issuance allocation` x (`revenue pool balance` + `average revenue pool balance`)
 
 The formula is chosen to ensure the ranking maximizes security of the system considering the notable potential attacks that can harm stable operation of the system. The formulation has the following properties:
 
@@ -249,7 +249,7 @@ The system supports pegging to any relatively stable real world currency, as wel
 
 The pegged currency is the money product that is ultimate offered to everyday digital money users. It will have a stable value, the unit of which is widely accepted and used in commercial transactions by buyers and merchants. The Ethereum based proof of concept implementation of this system will use the ERC20 token standard to represents the value of the US dollar ($USD).
 
-The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of such functionality is described by the official [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md)(also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/)). Additional functionality should be implemented to respectively **mint** or **burn** tokens upon the pegged currency's **issuance** or **return**.
+The token requires the base functionality already available in common programmable digital tokens, such as basic transfer functionality between accounts. The Ethereum community's version of such functionality is described by the official [ERC20 standard](https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md) (also described [here](https://docs.ethhub.io/built-on-ethereum/erc-token-standards/erc20/)). Additional functionality should be implemented to respectively **mint** or **burn** tokens upon the pegged currency's **issuance** or **return**.
 
 ### Reference currency
 
