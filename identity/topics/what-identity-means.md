@@ -28,6 +28,10 @@ We identify objects and things, somewhat similarly to above, but with possible o
 
 At the root of it all, the cognitive process of identification assigns specific properties, characteristics, and intentions to things and beings we know or connect with. Cognitive identities are therefore, the most basic cognitive constructs associated with all things that are distinctly recognized. This meaning is what the simple definition in previous section most relies upon.
 
+![Cognitive identity][cognitive-identity]
+
+[cognitive-identity]: what-identity-means/cognitive-identity@400h.png
+
 The one, and most important, instance of cognitive identity is that of the self, also known as self-identity, which is also used synonymously as such by psychologists. This is the concept referred to in the sentence: "She felt her identity evolve after having her first child".
 
 Sociologists use identity, or collective identity, in the scope of social group membership. The following shows an example of its usage: "He was feeling more proud of his Asian-American identity". Collective identity is a subset of self-identity that pertains to group membership, and has significant consequences related to one's feelings of belonging and self-efficacy. 
@@ -45,6 +49,10 @@ Identity systems operate by defining, maintaining and using virtual representati
 By using language we represent our thoughts in words, in order to communicate more effectively with others. Similarly, we use virtual identity artifacts, to help us communicate the concepts of identity and trust. As human societies, we have created and used identity systems, to make economic transactions more efficient, though easing the verification of digital identity and reputation of transaction participants.
 
 Initially this was done at the scale of friends, family and tribe, using informal identity and reputation systems. In the past century or so we have been able to scale this even further to the level of nation states, by using large scale identity systems, such as the United States Social Security system. Furthermore, in the recent decades, we have improved the scale and efficiency of such systems with the use of digital technology, digital identity systems and digital identities.
+
+![Cognitive and digital identity][virtual-identity]
+
+[virtual-identity]: what-identity-means/virtual-identity@400h.png
 
 ## The identity industry
 
