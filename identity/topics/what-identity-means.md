@@ -1,5 +1,9 @@
 # What "identity" means
 
+![What "identity" means][identity-meaning]
+
+[identity-meaning]: what-identity-means/identity-meaning@1000w.png
+
 Every time people first hear about "identity" as my area of work, they confront me with the most perplexed and confounded expressions. Certainly this has something to do with the fact that "identity" is one of the more abstract and overloaded terms in the history of technology, business, humanities and sciences. It almost feels like it has become one of those buzz-words that confuses and impresses the audience enough to make them more susceptible to sales tactics. And so I set out to find a clear definition that would help me explain what it is.
 
 ## Summary
@@ -30,7 +34,7 @@ At the root of it all, the cognitive process of identification assigns specific 
 
 ![Cognitive identity][cognitive-identity]
 
-[cognitive-identity]: what-identity-means/cognitive-identity@400h.png
+[cognitive-identity]: what-identity-means/cognitive-identity@1000w.png
 
 The one, and most important, instance of cognitive identity is that of the self, also known as self-identity, which is also used synonymously as such by psychologists. This is the concept referred to in the sentence: "She felt her identity evolve after having her first child".
 
@@ -50,9 +54,9 @@ By using language we represent our thoughts in words, in order to communicate mo
 
 Initially this was done at the scale of friends, family and tribe, using informal identity and reputation systems. In the past century or so we have been able to scale this even further to the level of nation states, by using large scale identity systems, such as the United States Social Security system. Furthermore, in the recent decades, we have improved the scale and efficiency of such systems with the use of digital technology, digital identity systems and digital identities.
 
-![Cognitive and digital identity][virtual-identity]
+![Virtual and digital identity][virtual-identity]
 
-[virtual-identity]: what-identity-means/virtual-identity@400h.png
+[virtual-identity]: what-identity-means/virtual-identity@1000w.png
 
 ## The identity industry
 
