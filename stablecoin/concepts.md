@@ -62,17 +62,29 @@
 
 #### ⏱⬆️ Accumulation tokens
 
+ToDo: ☑️ Apply this concept to the technical specs, whitepaper, and the proof of concept.
+
+Accumulation tokens are built on standard blockchain tokens (such as the ERC-20 token on Ethereum), however they are designed for accumulating interest. This interest is positive in most cases, although it can also be negative, which allows for more flexibility for setting monetary policy.
+
 ![Accumulation token][accumulation-token]
 
 [accumulation-token]: concepts/accumulation-token@300h.png
 
+Ultimately the value of a given unit of the standard token is set by the central smart contract in charge of the automated monetary policy. The value is continually increased for a positive interest and decreased for a negative one. For example, at a given point in time, the UniDollar (ERC-20) accumulation token can be worth 1.60 UniDollars, and the next day the monetary system can increase it to 1.600263, for a daily interest rate of `0.01644%` and an annualized rate of `6.0%`.
+
+Negative interest rate is used in very rare cases to increase a desire to sell, thus incentivizing an increase token supply in the markets, and thus lowering the token's price.
+
 #### 📦⛓ Multi-blockchain
+
+The PegLoan concept can be similarly applied on top of any programmable blockchain. At the time of writing, the Ethereum blockchain is the most commonly used programmable blockchain, and thus was used for the initial proof of concept.
 
 ![Applicable to multiple blockchains][multi-blockchain]
 
 [multi-blockchain]: concepts/multi-blockchain@300h.png
 
 #### 💵💶 Multi-currency
+
+The PegLoan concept can be similarly applied to any stable currency, although the systems supporting different currencies will be fully isolated.
 
 ![Applicable to multiple currencies][multi-currency]
 
