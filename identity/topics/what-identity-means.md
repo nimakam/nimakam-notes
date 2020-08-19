@@ -1,6 +1,7 @@
 # What "identity" means
 
 Every time I tell someone about identity, my field of work, they glare back with a perplexed expression. Why does the word **"identity"** confuse people so much? Surely this has something to do with it being one of the most overloaded terms in the history of technology, business, and humanities. It has become a designated buzz-word that confuses and impresses audiences, enough to make them more susceptible to sales tactics. What if it was possible to break down and demystify the word?
+
 And so, I set out to find a clear definition that would help me explain identity to others.
 
 ![What identity means][identity-meaning]
