@@ -105,6 +105,10 @@ See the levels used in the map below, followed by their estimated economic order
 8. **Sub-scenario** - $100K- $1M
 9. **Sub-feature** - $10K- $100K
 
+![Map levels][map-levels]
+
+[map-levels]: how-to-map-an-industry/map-levels.png
+
 ### Industry
 
 The industry scope represent the space of all activities related to a specific and related set of human needs, as well as all the businesses and offerings that add value in that general area. The greater space may encompass vastly different customers, modes of delivery and technologies, each of which will form a separate segment, ecosystem or technology wave.
