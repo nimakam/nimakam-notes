@@ -10,6 +10,10 @@
 
 [The internet's missing identity layer](identity/topics/internet-missing-identity-layer.md)
 
+## General
+
+[How to map an industry](notes/how-to-map-an-industry.md)
+
 ## Profiles
 
 [LinkedIn](https://www.linkedin.com/in/nimakamoosi/) - [Twitter](https://twitter.com/nimakam)
