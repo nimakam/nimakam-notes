@@ -10,6 +10,8 @@
 
 [The internet's missing identity layer](identity/topics/internet-missing-identity-layer.md)
 
+[The economics of identity systems](identity/topics/economics-of-identity-systems.md)
+
 [How humans understand identity](identity/topics/how-humans-understand-identity.md)
 
 ## General
