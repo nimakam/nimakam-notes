@@ -135,7 +135,7 @@ For artifacts such as ID (identification document) cards, keys, payment cards, o
 
 ![Tool, tool-belt, toolbox analogy for identity system artifacts][toolbox-analogy]
 
-[toolbox-analogy]: how-humans-understand-identity/toolbox-analogy.png
+[toolbox-analogy]: how-humans-understand-identity/toolbox-analogy@500w.png
 
 ## Conclusion
 
